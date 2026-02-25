@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Health Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --card: #1c2333;
+    --border: #30363d;
+    --accent: #58a6ff;
+    --accent2: #3fb950;
+    --accent3: #f78166;
+    --accent4: #d2a8ff;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --radius: 16px;
+    --carb-color: #58a6ff;
+    --prot-color: #3fb950;
+    --fat-color:  #f0883e;
+    --sod-color:  #d2a8ff;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background-image: radial-gradient(ellipse at 20% 50%, rgba(88,166,255,0.06) 0%, transparent 60%),
+                      radial-gradient(ellipse at 80% 20%, rgba(63,185,80,0.05) 0%, transparent 50%);
+  }
+
+  .wrapper { width: 100%; max-width: 560px; animation: fadeUp 0.6s ease both; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  header { text-align: center; margin-bottom: 36px; }
+
+  header .pill {
+    display: inline-block;
+    background: rgba(88,166,255,0.12);
+    color: var(--accent);
+    font-size: 12px; font-weight: 600;
+    letter-spacing: 2px; text-transform: uppercase;
+    padding: 6px 16px; border-radius: 50px;
+    border: 1px solid rgba(88,166,255,0.2);
+    margin-bottom: 14px;
+  }
+
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 5vw, 2.8rem); line-height: 1.15;
+    background: linear-gradient(135deg, #e6edf3 0%, #8b949e 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+
+  header p { color: var(--muted); margin-top: 10px; font-size: 15px; font-weight: 300; }
+
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 32px;
+    position: relative; overflow: hidden;
+  }
+  .card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .field { display: flex; flex-direction: column; gap: 8px; }
+  .field.full { grid-column: 1 / -1; }
+
+  label { font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+
+  input, select {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 15px;
+    padding: 12px 16px; width: 100%;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    -webkit-appearance: none; appearance: none;
+  }
+  select {
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238b949e' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px;
+  }
+  input:focus, select:focus {
+    outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(88,166,255,0.12);
+  }
+  input::placeholder { color: var(--muted); opacity: 0.6; }
+
+  .gender-group { display: flex; gap: 10px; }
+  .gender-btn {
+    flex: 1; padding: 11px; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--surface); color: var(--muted);
+    font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+    cursor: pointer; transition: all 0.2s; text-align: center;
+  }
+  .gender-btn.active { border-color: var(--accent); background: rgba(88,166,255,0.1); color: var(--accent); }
+
+  .divider { height: 1px; background: var(--border); }
+  .section-title {
+    font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted);
+    grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; margin-bottom: -4px;
+  }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .btn {
+    width: 100%; padding: 15px; border-radius: 12px; border: none;
+    background: linear-gradient(135deg, #58a6ff, #3fb950);
+    color: #0d1117; font-family: 'DM Sans', sans-serif;
+    font-size: 16px; font-weight: 700; cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s; margin-top: 8px;
+  }
+  .btn:hover { opacity: 0.92; transform: translateY(-1px); }
+  .btn:active { transform: translateY(0); }
+
+  /* ── OVERLAY ── */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.82);
+    backdrop-filter: blur(8px);
+    display: flex; align-items: flex-start; justify-content: center;
+    padding: 30px 20px; z-index: 100; overflow-y: auto;
+    opacity: 0; pointer-events: none; transition: opacity 0.3s;
+  }
+  .overlay.show { opacity: 1; pointer-events: all; }
+
+  .popup {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 20px; padding: 32px; width: 100%; max-width: 520px;
+    transform: scale(0.9) translateY(20px);
+    transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    margin: auto;
+  }
+  .overlay.show .popup { transform: scale(1) translateY(0); }
+
+  .popup-header { text-align: center; margin-bottom: 22px; }
+  .popup-avatar {
+    width: 60px; height: 60px; border-radius: 50%;
+    background: linear-gradient(135deg, rgba(88,166,255,0.2), rgba(63,185,80,0.2));
+    border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; margin: 0 auto 12px;
+  }
+  .popup-name { font-family: 'Playfair Display', serif; font-size: 1.5rem; }
+  .popup-subtitle { color: var(--muted); font-size: 12px; margin-top: 4px; }
+  .bmi-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 7px 18px; border-radius: 50px; font-weight: 700; font-size: 13px;
+    margin-top: 12px; border: 1.5px solid;
+  }
+
+  /* stats row */
+  .stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 20px 0; }
+  .stat-box {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px 8px; text-align: center;
+    position: relative; overflow: hidden;
+  }
+  .stat-box::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+  .stat-box.bmr::before  { background: var(--accent); }
+  .stat-box.tdee::before { background: var(--accent2); }
+  .stat-box.goal::before { background: var(--accent3); }
+  .stat-label { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .stat-value { font-family: 'Playfair Display', serif; font-size: 1.4rem; line-height: 1; }
+  .stat-value.bmr-val  { color: var(--accent); }
+  .stat-value.tdee-val { color: var(--accent2); }
+  .stat-value.goal-val { color: var(--accent3); }
+  .stat-unit { font-size: 10px; color: var(--muted); margin-top: 4px; }
+
+  /* diet section */
+  .diet-section { margin-top: 4px; }
+  .diet-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px; flex-wrap: wrap; gap: 8px;
+  }
+  .diet-name-tag { font-family: 'Playfair Display', serif; font-size: 1.05rem; color: var(--accent4); }
+  .diet-range-hint {
+    font-size: 11px; color: var(--muted);
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 4px 10px;
+  }
+
+  /* macro bars */
+  .macro-bars { display: flex; flex-direction: column; gap: 12px; }
+  .macro-row { display: flex; flex-direction: column; gap: 5px; }
+  .macro-top { display: flex; align-items: center; justify-content: space-between; font-size: 13px; }
+  .macro-name { font-weight: 600; display: flex; align-items: center; gap: 6px; }
+  .macro-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .macro-numbers { color: var(--muted); font-size: 12px; text-align: right; }
+  .macro-numbers strong { color: var(--text); font-size: 14px; }
+  .bar-track { height: 8px; background: var(--bg); border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+  .bar-fill { height: 100%; border-radius: 10px; transition: width 0.5s cubic-bezier(0.34,1.2,0.64,1); }
+
+  /* sodium */
+  .sodium-row {
+    display: flex; align-items: center; justify-content: space-between;
+    background: rgba(210,168,255,0.06); border: 1px solid rgba(210,168,255,0.15);
+    border-radius: 10px; padding: 10px 14px; margin-top: 12px; font-size: 13px;
+  }
+  .sodium-label { display: flex; align-items: center; gap: 6px; font-weight: 600; color: var(--accent4); }
+  .sodium-val { color: var(--accent4); font-family: 'Playfair Display', serif; font-size: 1.1rem; }
+  .sodium-unit { color: var(--muted); font-size: 11px; }
+
+  /* adjust */
+  .adjust-toggle {
+    width: 100%; padding: 11px;
+    background: rgba(88,166,255,0.06); border: 1px solid rgba(88,166,255,0.2);
+    border-radius: 10px; color: var(--accent); font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+    margin-top: 18px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .adjust-toggle:hover { background: rgba(88,166,255,0.12); }
+  .adjust-toggle .arrow { transition: transform 0.3s; display: inline-block; }
+  .adjust-toggle.open .arrow { transform: rotate(180deg); }
+
+  .adjust-panel { overflow: hidden; max-height: 0; transition: max-height 0.4s ease; }
+  .adjust-panel.open { max-height: 600px; }
+
+  .adjust-inner {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 18px; margin-top: 10px;
+    display: flex; flex-direction: column; gap: 16px;
+  }
+
+  .adjust-note {
+    font-size: 12px; color: var(--muted);
+    background: rgba(88,166,255,0.05); border: 1px solid rgba(88,166,255,0.12);
+    border-radius: 8px; padding: 10px 12px; line-height: 1.6;
+  }
+
+  .slider-row { display: flex; flex-direction: column; gap: 6px; }
+  .slider-top { display: flex; align-items: center; justify-content: space-between; font-size: 13px; }
+  .slider-name { font-weight: 600; display: flex; align-items: center; gap: 6px; }
+  .slider-pct { font-family: 'Playfair Display', serif; font-size: 1.1rem; min-width: 50px; text-align: right; }
+  .slider-sub { display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    height: 5px; border-radius: 10px; outline: none;
+    cursor: pointer; padding: 0; border: none; box-shadow: none;
+    width: 100%;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 18px; height: 18px; border-radius: 50%;
+    border: 2px solid var(--bg); cursor: pointer; transition: transform 0.15s;
+  }
+  input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+  .total-check {
+    text-align: center; font-size: 12px; padding: 8px; border-radius: 8px; font-weight: 600; transition: all 0.3s;
+  }
+  .total-check.ok   { background: rgba(63,185,80,0.1);   color: var(--accent2); border: 1px solid rgba(63,185,80,0.2); }
+  .total-check.warn { background: rgba(247,129,102,0.1); color: var(--accent3); border: 1px solid rgba(247,129,102,0.2); }
+
+  .reset-btn {
+    width: 100%; padding: 9px; border-radius: 10px;
+    border: 1px solid var(--border); background: transparent;
+    color: var(--muted); font-family: 'DM Sans', sans-serif;
+    font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s;
+  }
+  .reset-btn:hover { background: var(--card); color: var(--text); border-color: var(--accent3); }
+
+  .close-btn {
+    width: 100%; padding: 13px; border-radius: 12px;
+    border: 1px solid var(--border); background: transparent;
+    color: var(--muted); font-family: 'DM Sans', sans-serif;
+    font-size: 15px; font-weight: 500; cursor: pointer; transition: all 0.2s; margin-top: 18px;
+  }
+  .close-btn:hover { background: var(--surface); color: var(--text); border-color: var(--accent); }
+
+  @media (max-width: 480px) {
+    .grid-2 { grid-template-columns: 1fr; }
+    .card { padding: 22px; }
+    .popup { padding: 24px 16px; }
+    .stats-row { grid-template-columns: 1fr 1fr; }
+    .stats-row .stat-box:last-child { grid-column: 1 / -1; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+  <header>
+    <div class="pill">Health Metrics</div>
+    <h1>Body Calculator</h1>
+    <p>BMI · BMR · TDEE · Diet Plan — all in one place</p>
+  </header>
+
+  <div class="card">
+    <div class="grid-2">
+
+      <div class="field full">
+        <label>Patient Name</label>
+        <input type="text" id="name" placeholder="e.g. Ahmed Hassan">
+      </div>
+
+      <div class="field full">
+        <label>Gender</label>
+        <div class="gender-group">
+          <button class="gender-btn active" id="btn-male" onclick="selectGender('male')">♂ Male</button>
+          <button class="gender-btn" id="btn-female" onclick="selectGender('female')">♀ Female</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Weight (kg)</label>
+        <input type="number" id="weight" placeholder="70" min="1">
+      </div>
+
+      <div class="field">
+        <label>Height (cm)</label>
+        <input type="number" id="height" placeholder="175" min="1">
+      </div>
+
+      <div class="field full">
+        <label>Age (years)</label>
+        <input type="number" id="age" placeholder="30" min="1" max="120">
+      </div>
+
+      <div class="divider" style="grid-column:1/-1;"></div>
+      <div class="section-title">Activity &amp; Goal</div>
+
+      <div class="field full">
+        <label>Activity Level</label>
+        <select id="activity">
+          <option value="1.2">Sedentary — little or no exercise</option>
+          <option value="1.375">Lightly Active — 1–3 days/week</option>
+          <option value="1.55" selected>Moderately Active — 3–5 days/week</option>
+          <option value="1.725">Very Active — 6–7 days/week</option>
+          <option value="1.9">Extra Active — physical job + training</option>
+        </select>
+      </div>
+
+      <div class="field full">
+        <label>Goal Adjustment</label>
+        <select id="goal">
+          <option value="0">Maintain Weight — eat at TDEE</option>
+          <option value="-300">Mild Weight Loss — TDEE − 300 kcal</option>
+          <option value="-500">Weight Loss — TDEE − 500 kcal</option>
+          <option value="300">Mild Weight Gain — TDEE + 300 kcal</option>
+          <option value="500">Weight Gain — TDEE + 500 kcal</option>
+        </select>
+      </div>
+
+      <div class="divider" style="grid-column:1/-1;"></div>
+      <div class="section-title">Diet Plan</div>
+
+      <div class="field full">
+        <label>Diet Type</label>
+        <select id="diet">
+          <option value="mediterranean">🫒 Mediterranean Diet</option>
+          <option value="dash">💙 DASH Diet</option>
+          <option value="lowcarb">💪 Low Carb High Protein</option>
+          <option value="keto">🥑 Keto</option>
+          <option value="if">⏱ Intermittent Fasting</option>
+          <option value="paleo">🥩 Paleo</option>
+        </select>
+      </div>
+
+    </div>
+
+    <div style="margin-top:24px;">
+      <button class="btn" onclick="calculate()">Calculate Results →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── POPUP ── -->
+<div class="overlay" id="overlay" onclick="closePopup(event)">
+  <div class="popup" id="popup">
+
+    <div class="popup-header">
+      <div class="popup-avatar" id="popup-avatar">👤</div>
+      <div class="popup-name" id="popup-name"></div>
+      <div class="popup-subtitle" id="popup-subtitle"></div>
+      <div id="bmi-badge" class="bmi-badge"></div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-box bmr">
+        <div class="stat-label">BMR</div>
+        <div class="stat-value bmr-val" id="res-bmr">—</div>
+        <div class="stat-unit">kcal at rest</div>
+      </div>
+      <div class="stat-box tdee">
+        <div class="stat-label">TDEE</div>
+        <div class="stat-value tdee-val" id="res-tdee">—</div>
+        <div class="stat-unit">kcal active</div>
+      </div>
+      <div class="stat-box goal">
+        <div class="stat-label">Target</div>
+        <div class="stat-value goal-val" id="res-goal">—</div>
+        <div class="stat-unit">kcal / day</div>
+      </div>
+    </div>
+
+    <!-- Diet macros -->
+    <div class="diet-section">
+      <div class="diet-header">
+        <div class="diet-name-tag" id="diet-name-tag">—</div>
+        <div class="diet-range-hint" id="diet-range-hint">—</div>
+      </div>
+      <div class="macro-bars" id="macro-bars"></div>
+      <div id="sodium-row-wrap"></div>
+    </div>
+
+    <!-- Adjust toggle -->
+    <button class="adjust-toggle" id="adj-toggle" onclick="toggleAdjust()">
+      ⚙ Adjust Macros &nbsp;<span class="arrow">▾</span>
+    </button>
+
+    <div class="adjust-panel" id="adj-panel">
+      <div class="adjust-inner">
+        <div class="adjust-note" id="adj-note"></div>
+
+        <!-- Carb slider -->
+        <div class="slider-row">
+          <div class="slider-top">
+            <div class="slider-name">
+              <span class="macro-dot" style="background:var(--carb-color)"></span>Carbohydrates
+            </div>
+            <div class="slider-pct" id="sl-carb-pct" style="color:var(--carb-color)">—</div>
+          </div>
+          <input type="range" id="sl-carb-input" min="5" max="80"
+            style="accent-color:var(--carb-color)" oninput="onSlider('carb')">
+          <div class="slider-sub">
+            <span id="sl-carb-g">—</span>
+            <span id="sl-carb-kcal">—</span>
+          </div>
+        </div>
+
+        <!-- Protein slider -->
+        <div class="slider-row">
+          <div class="slider-top">
+            <div class="slider-name">
+              <span class="macro-dot" style="background:var(--prot-color)"></span>Protein
+            </div>
+            <div class="slider-pct" id="sl-prot-pct" style="color:var(--prot-color)">—</div>
+          </div>
+          <input type="range" id="sl-prot-input" min="5" max="60"
+            style="accent-color:var(--prot-color)" oninput="onSlider('prot')">
+          <div class="slider-sub">
+            <span id="sl-prot-g">—</span>
+            <span id="sl-prot-kcal">—</span>
+          </div>
+        </div>
+
+        <!-- Fat slider -->
+        <div class="slider-row">
+          <div class="slider-top">
+            <div class="slider-name">
+              <span class="macro-dot" style="background:var(--fat-color)"></span>Fat
+            </div>
+            <div class="slider-pct" id="sl-fat-pct" style="color:var(--fat-color)">—</div>
+          </div>
+          <input type="range" id="sl-fat-input" min="5" max="80"
+            style="accent-color:var(--fat-color)" oninput="onSlider('fat')">
+          <div class="slider-sub">
+            <span id="sl-fat-g">—</span>
+            <span id="sl-fat-kcal">—</span>
+          </div>
+        </div>
+
+        <div class="total-check" id="total-check">Total: 100%</div>
+        <button class="reset-btn" onclick="resetSliders()">↺ Reset to diet defaults</button>
+      </div>
+    </div>
+
+    <button class="close-btn" onclick="closePopup()">Close</button>
+  </div>
+</div>
+
+<script>
+/* ─── DIET DATABASE ───────────────────────────────────────────────────────
+   carb/prot/fat = [min%, max%]  |  sodium = mg limit or null
+──────────────────────────────────────────────────────────────────────────── */
+const DIETS = {
+  mediterranean: { label:'Mediterranean Diet',   carb:[50,60], prot:[15,20], fat:[25,35], sodium:null },
+  dash:          { label:'DASH Diet',            carb:[55,55], prot:[18,18], fat:[27,27], sodium:1500 },
+  lowcarb:       { label:'Low Carb High Protein',carb:[10,30], prot:[25,35], fat:[30,50], sodium:null },
+  keto:          { label:'Keto',                 carb:[5,10],  prot:[20,25], fat:[70,75], sodium:null },
+  if:            { label:'Intermittent Fasting', carb:[35,40], prot:[25,30], fat:[30,35], sodium:null },
+  paleo:         { label:'Paleo',                carb:[20,30], prot:[25,35], fat:[35,45], sodium:null }
+};
+
+const mid = (a, b) => Math.round((a + b) / 2);
+
+let gender = 'male';
+let currentTarget = 0;
+let currentDiet   = null;
+let adjOpen = false;
+let sPct = { carb:50, prot:20, fat:30 };
+
+/* ─── UI ─────────────────────────────────────────────────────────────────── */
+function selectGender(g) {
+  gender = g;
+  document.getElementById('btn-male').classList.toggle('active', g === 'male');
+  document.getElementById('btn-female').classList.toggle('active', g === 'female');
+}
+
+function getBMIInfo(bmi) {
+  if (bmi < 18.5) return { label:'Underweight',      color:'#79c0ff', bg:'rgba(121,192,255,0.12)', border:'rgba(121,192,255,0.3)' };
+  if (bmi < 25)   return { label:'Normal Weight',    color:'#3fb950', bg:'rgba(63,185,80,0.12)',   border:'rgba(63,185,80,0.3)' };
+  if (bmi < 30)   return { label:'Overweight',       color:'#e3b341', bg:'rgba(227,179,65,0.12)',  border:'rgba(227,179,65,0.3)' };
+  if (bmi < 35)   return { label:'Obese I  [30–35)', color:'#f0883e', bg:'rgba(240,136,62,0.12)',  border:'rgba(240,136,62,0.3)' };
+  if (bmi < 40)   return { label:'Obese II  [35–40)',color:'#f85149', bg:'rgba(248,81,73,0.12)',   border:'rgba(248,81,73,0.3)' };
+  return           { label:'Obese III  [40+]',       color:'#ff7b72', bg:'rgba(255,123,114,0.18)', border:'rgba(255,123,114,0.4)' };
+}
+
+function pctLabel(mn, mx) { return mn === mx ? `${mn}%` : `${mn}%–${mx}%`; }
+
+/* ─── MAIN CALCULATION ───────────────────────────────────────────────────── */
+function calculate() {
+  const name    = document.getElementById('name').value.trim() || 'Patient';
+  const weight  = parseFloat(document.getElementById('weight').value);
+  const height  = parseFloat(document.getElementById('height').value);
+  const age     = parseFloat(document.getElementById('age').value);
+  const actMul  = parseFloat(document.getElementById('activity').value);
+  const goalAdj = parseFloat(document.getElementById('goal').value);
+  const dietKey = document.getElementById('diet').value;
+  const goalSel = document.getElementById('goal');
+  const goalTxt = goalSel.options[goalSel.selectedIndex].text.split(' — ')[0];
+
+  if (!weight || !height || !age) { alert('Please fill in Weight, Height, and Age.'); return; }
+
+  const heightM = height / 100;
+  const bmi = weight / (heightM * heightM);
+
+  const bmr = gender === 'male'
+    ? (10 * weight) + (6.25 * height) - (5 * age) + 5
+    : (10 * weight) + (6.25 * height) - (5 * age) - 161;
+
+  const tdee   = bmr * actMul;
+  const target = Math.round(tdee + goalAdj);
+
+  currentTarget = target;
+  currentDiet   = DIETS[dietKey];
+
+  const bmiInfo = getBMIInfo(bmi);
+
+  /* header */
+  document.getElementById('popup-avatar').textContent   = gender === 'male' ? '👨' : '👩';
+  document.getElementById('popup-name').textContent     = name;
+  document.getElementById('popup-subtitle').textContent =
+    `${gender === 'male' ? 'Male' : 'Female'} · ${age} yrs · ${weight} kg · ${height} cm · ${goalTxt}`;
+
+  const badge = document.getElementById('bmi-badge');
+  badge.textContent         = `BMI ${bmi.toFixed(1)} — ${bmiInfo.label}`;
+  badge.style.color         = bmiInfo.color;
+  badge.style.background    = bmiInfo.bg;
+  badge.style.borderColor   = bmiInfo.border;
+
+  /* stats */
+  document.getElementById('res-bmr').textContent  = Math.round(bmr).toLocaleString();
+  document.getElementById('res-tdee').textContent = Math.round(tdee).toLocaleString();
+  document.getElementById('res-goal').textContent = target.toLocaleString();
+
+  /* diet */
+  const d = currentDiet;
+  document.getElementById('diet-name-tag').textContent  = d.label;
+  document.getElementById('diet-range-hint').textContent =
+    `C ${pctLabel(d.carb[0],d.carb[1])} · P ${pctLabel(d.prot[0],d.prot[1])} · F ${pctLabel(d.fat[0],d.fat[1])}`;
+
+  document.getElementById('adj-note').textContent =
+    `Defaults are set to the midpoint of ${d.label} ranges. ` +
+    `Drag the sliders to fine-tune. Keep Carb + Protein + Fat = 100%.`;
+
+  initSliders();
+  renderMacroBars();
+
+  /* reset adjust panel */
+  adjOpen = false;
+  document.getElementById('adj-toggle').classList.remove('open');
+  document.getElementById('adj-panel').classList.remove('open');
+
+  document.getElementById('overlay').classList.add('show');
+}
+
+/* ─── MACRO BARS ─────────────────────────────────────────────────────────── */
+function renderMacroBars() {
+  const cal = currentTarget;
+  const macros = [
+    { key:'carb', name:'Carbohydrates', color:'var(--carb-color)', pct:sPct.carb, kcalPerG:4, range:[currentDiet.carb[0],currentDiet.carb[1]] },
+    { key:'prot', name:'Protein',       color:'var(--prot-color)', pct:sPct.prot, kcalPerG:4, range:[currentDiet.prot[0],currentDiet.prot[1]] },
+    { key:'fat',  name:'Fat',           color:'var(--fat-color)',  pct:sPct.fat,  kcalPerG:9, range:[currentDiet.fat[0], currentDiet.fat[1]]  },
+  ];
+
+  document.getElementById('macro-bars').innerHTML = macros.map(m => {
+    const kcal = Math.round(cal * m.pct / 100);
+    const g    = Math.round(kcal / m.kcalPerG);
+    return `
+      <div class="macro-row">
+        <div class="macro-top">
+          <div class="macro-name">
+            <span class="macro-dot" style="background:${m.color}"></span>
+            ${m.name}
+            <span style="color:var(--muted);font-size:11px;font-weight:400">(${pctLabel(m.range[0],m.range[1])})</span>
+          </div>
+          <div class="macro-numbers">
+            <strong>${m.pct}%</strong> &nbsp;·&nbsp; ${g} g &nbsp;·&nbsp; ${kcal} kcal
+          </div>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:${Math.min(100,m.pct)}%; background:${m.color};"></div>
+        </div>
+      </div>`;
+  }).join('');
+
+  /* sodium */
+  const sodWrap = document.getElementById('sodium-row-wrap');
+  sodWrap.innerHTML = currentDiet.sodium
+    ? `<div class="sodium-row">
+        <div class="sodium-label">🧂 Sodium limit</div>
+        <div><span class="sodium-val">${currentDiet.sodium.toLocaleString()}</span> <span class="sodium-unit">mg / day</span></div>
+       </div>`
+    : '';
+}
+
+/* ─── SLIDERS ────────────────────────────────────────────────────────────── */
+function initSliders() {
+  const d = currentDiet;
+  sPct.carb = mid(d.carb[0], d.carb[1]);
+  sPct.prot = mid(d.prot[0], d.prot[1]);
+  sPct.fat  = mid(d.fat[0],  d.fat[1]);
+  ['carb','prot','fat'].forEach(k => {
+    document.getElementById(`sl-${k}-input`).value = sPct[k];
+  });
+  updateSliderUI();
+}
+
+function onSlider(key) {
+  sPct[key] = parseInt(document.getElementById(`sl-${key}-input`).value);
+  updateSliderUI();
+  renderMacroBars();
+}
+
+function resetSliders() { initSliders(); renderMacroBars(); }
+
+function updateSliderUI() {
+  const cal = currentTarget;
+  const rows = [
+    { key:'carb', el:'sl-carb', kcalPerG:4, color:'var(--carb-color)' },
+    { key:'prot', el:'sl-prot', kcalPerG:4, color:'var(--prot-color)' },
+    { key:'fat',  el:'sl-fat',  kcalPerG:9, color:'var(--fat-color)'  },
+  ];
+  rows.forEach(r => {
+    const pct  = sPct[r.key];
+    const kcal = Math.round(cal * pct / 100);
+    const g    = Math.round(kcal / r.kcalPerG);
+    document.getElementById(`${r.el}-pct`).textContent  = `${pct}%`;
+    document.getElementById(`${r.el}-g`).textContent    = `${g} g`;
+    document.getElementById(`${r.el}-kcal`).textContent = `${kcal} kcal`;
+
+    const inp = document.getElementById(`${r.el}-input`);
+    const mn  = parseInt(inp.min), mx = parseInt(inp.max);
+    const fp  = ((pct - mn) / (mx - mn)) * 100;
+    inp.style.background = `linear-gradient(to right, ${r.color} ${fp}%, var(--border) ${fp}%)`;
+  });
+
+  const total = sPct.carb + sPct.prot + sPct.fat;
+  const tc = document.getElementById('total-check');
+  if (total === 100) {
+    tc.className = 'total-check ok';
+    tc.textContent = `✓ Total: 100% — perfectly balanced`;
+  } else {
+    tc.className = 'total-check warn';
+    tc.textContent = `⚠ Total: ${total}% — adjust to reach 100%`;
+  }
+}
+
+function toggleAdjust() {
+  adjOpen = !adjOpen;
+  document.getElementById('adj-toggle').classList.toggle('open', adjOpen);
+  document.getElementById('adj-panel').classList.toggle('open', adjOpen);
+}
+
+/* ─── CLOSE ──────────────────────────────────────────────────────────────── */
+function closePopup(e) {
+  if (!e || e.target === document.getElementById('overlay'))
+    document.getElementById('overlay').classList.remove('show');
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.getElementById('overlay').classList.remove('show');
+});
+</script>
+</body>
+</html>
