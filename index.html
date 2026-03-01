@@ -3,547 +3,1203 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Health Calculator</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<title>RD Patient Assessment</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  :root {
-    --bg: #0d1117;
-    --surface: #161b22;
-    --card: #1c2333;
-    --border: #30363d;
-    --accent: #58a6ff;
-    --accent2: #3fb950;
-    --accent3: #f78166;
-    --text: #e6edf3;
-    --muted: #8b949e;
-    --radius: 16px;
-  }
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --card: #1c2333;
+  --border: #30363d;
+  --accent: #58a6ff;
+  --accent2: #3fb950;
+  --accent3: #f78166;
+  --accent4: #d2a8ff;
+  --accent5: #e3b341;
+  --text: #e6edf3;
+  --muted: #8b949e;
+  --radius: 16px;
+  --carb-color: #58a6ff;
+  --prot-color: #3fb950;
+  --fat-color: #f0883e;
+}
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-    background-image: radial-gradient(ellipse at 20% 50%, rgba(88,166,255,0.06) 0%, transparent 60%),
-                      radial-gradient(ellipse at 80% 20%, rgba(63,185,80,0.05) 0%, transparent 50%);
-  }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  padding: 24px 16px 60px;
+  background-image:
+    radial-gradient(ellipse at 15% 50%, rgba(88,166,255,0.05) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 10%, rgba(63,185,80,0.04) 0%, transparent 50%);
+}
 
-  .wrapper {
-    width: 100%;
-    max-width: 560px;
-    animation: fadeUp 0.6s ease both;
-  }
+/* ══════════════ PROGRESS BAR ══════════════ */
+.progress-shell {
+  max-width: 680px; margin: 0 auto 28px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.progress-top {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 1px;
+}
+.progress-bar-track {
+  height: 4px; background: var(--border); border-radius: 10px; overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%; border-radius: 10px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+}
+.step-dots {
+  display: flex; gap: 6px; justify-content: center; flex-wrap: wrap;
+}
+.step-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--border); transition: all 0.3s;
+  cursor: pointer;
+}
+.step-dot.done  { background: var(--accent2); }
+.step-dot.active{ background: var(--accent); transform: scale(1.4); }
 
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(30px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
+/* ══════════════ CARD ══════════════ */
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 20px; padding: 36px 32px;
+  max-width: 680px; margin: 0 auto;
+  position: relative; overflow: hidden;
+  animation: fadeUp 0.45s ease both;
+}
+@keyframes fadeUp {
+  from { opacity:0; transform: translateY(24px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+.card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+}
 
-  header {
-    text-align: center;
-    margin-bottom: 36px;
-  }
+.step-header { margin-bottom: 28px; }
+.step-eyebrow {
+  font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 8px;
+  display: flex; align-items: center; gap: 8px;
+}
+.step-eyebrow .emoji { font-size: 16px; }
+.step-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.4rem, 3vw, 1.9rem); line-height: 1.2;
+  background: linear-gradient(135deg, #e6edf3 0%, #8b949e 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.step-subtitle { color: var(--muted); font-size: 13px; margin-top: 6px; font-weight: 300; }
 
-  header .pill {
-    display: inline-block;
-    background: rgba(88,166,255,0.12);
-    color: var(--accent);
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    padding: 6px 16px;
-    border-radius: 50px;
-    border: 1px solid rgba(88,166,255,0.2);
-    margin-bottom: 14px;
-  }
+/* ══════════════ FIELDS ══════════════ */
+.grid-1 { display: grid; grid-template-columns: 1fr; gap: 16px; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+.grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px; }
 
-  header h1 {
-    font-family: 'Playfair Display', serif;
-    font-size: clamp(2rem, 5vw, 2.8rem);
-    line-height: 1.15;
-    background: linear-gradient(135deg, #e6edf3 0%, #8b949e 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
+.field { display: flex; flex-direction: column; gap: 7px; }
+.field.full { grid-column: 1 / -1; }
 
-  header p {
-    color: var(--muted);
-    margin-top: 10px;
-    font-size: 15px;
-    font-weight: 300;
-  }
+label {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.8px;
+  text-transform: uppercase; color: var(--muted);
+}
 
-  .card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 32px;
-    position: relative;
-    overflow: hidden;
-  }
+input[type=text], input[type=tel], input[type=email], input[type=date],
+input[type=number], select, textarea {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; color: var(--text);
+  font-family: 'DM Sans', sans-serif; font-size: 15px;
+  padding: 11px 14px; width: 100%;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  -webkit-appearance: none; appearance: none;
+  resize: vertical;
+}
+select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238b949e' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px;
+  cursor: pointer;
+}
+textarea { min-height: 80px; }
+input:focus, select:focus, textarea:focus {
+  outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(88,166,255,0.1);
+}
+input::placeholder, textarea::placeholder { color: var(--muted); opacity: 0.5; }
+input[type=date]::-webkit-calendar-picker-indicator { filter: invert(0.6); }
 
-  .card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, var(--accent), var(--accent2));
-    border-radius: var(--radius) var(--radius) 0 0;
-  }
+/* ══════════════ GENDER TOGGLE ══════════════ */
+.gender-group { display: flex; gap: 10px; }
+.gender-btn {
+  flex:1; padding:10px; border-radius:10px;
+  border:1px solid var(--border); background:var(--surface); color:var(--muted);
+  font-family:'DM Sans',sans-serif; font-size:14px; font-weight:500;
+  cursor:pointer; transition:all 0.2s; text-align:center;
+}
+.gender-btn.active { border-color:var(--accent); background:rgba(88,166,255,0.1); color:var(--accent); }
 
-  .grid-2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 18px;
-  }
+/* ══════════════ RADIO / CHECK ══════════════ */
+.radio-group, .checkbox-group {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px;
+}
+.radio-option, .check-option {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 12px; cursor: pointer;
+  font-size: 13px; transition: all 0.2s; user-select: none;
+}
+.radio-option:hover, .check-option:hover {
+  border-color: var(--accent); color: var(--accent);
+}
+.radio-option input, .check-option input[type=checkbox], .check-option input[type=radio] {
+  width: 14px; height: 14px; accent-color: var(--accent);
+  padding: 0; border: none; background: transparent; flex-shrink: 0;
+}
+.check-option input[type=text] {
+  width: 110px; padding: 2px 6px; font-size: 13px; margin-left: 4px;
+  border-radius: 6px; height: 26px;
+}
 
-  .field {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
+/* readiness row */
+.readiness-group {
+  display: flex; gap: 6px; flex-wrap: wrap;
+}
+.readiness-btn {
+  width: 40px; height: 40px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--surface);
+  color: var(--muted); font-family: 'DM Sans', sans-serif;
+  font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+}
+.readiness-btn.active { border-color: var(--accent); background: rgba(88,166,255,0.15); color: var(--accent); }
 
-  .field.full { grid-column: 1 / -1; }
+/* ══════════════ SECTION DIVIDER ══════════════ */
+.sec-divider {
+  height: 1px; background: var(--border); margin: 22px 0;
+  grid-column: 1 / -1;
+}
+.sec-label {
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--muted); grid-column: 1/-1;
+  display: flex; align-items: center; gap: 8px; margin-bottom: -4px;
+}
+.sec-label::after { content:''; flex:1; height:1px; background: var(--border); }
 
-  label {
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
+/* ══════════════ MEASUREMENT BOX ══════════════ */
+.meas-box {
+  background: rgba(88,166,255,0.04);
+  border: 1px solid rgba(88,166,255,0.15);
+  border-radius: 12px; padding: 18px;
+}
 
-  input, select {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 15px;
-    padding: 12px 16px;
-    width: 100%;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    -webkit-appearance: none;
-    appearance: none;
-  }
+/* ══════════════ NAV BUTTONS ══════════════ */
+.nav-row {
+  display: flex; gap: 12px; margin-top: 32px;
+}
+.btn-prev {
+  padding: 13px 24px; border-radius: 12px;
+  border: 1px solid var(--border); background: transparent;
+  color: var(--muted); font-family: 'DM Sans', sans-serif;
+  font-size: 15px; font-weight: 500; cursor: pointer; transition: all 0.2s;
+}
+.btn-prev:hover { border-color: var(--accent); color: var(--text); background: var(--surface); }
+.btn-next {
+  flex: 1; padding: 13px; border-radius: 12px; border: none;
+  background: linear-gradient(135deg, #58a6ff, #3fb950);
+  color: #0d1117; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; font-weight: 700; cursor: pointer; transition: opacity 0.2s, transform 0.15s;
+}
+.btn-next:hover { opacity: 0.9; transform: translateY(-1px); }
+.btn-next:active { transform: translateY(0); }
 
-  select {
-    cursor: pointer;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238b949e' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 14px center;
-    padding-right: 36px;
-  }
+/* ══════════════ OVERLAY / POPUP ══════════════ */
+.overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(10px);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 30px 16px; z-index: 200; overflow-y: auto;
+  opacity: 0; pointer-events: none; transition: opacity 0.3s;
+}
+.overlay.show { opacity: 1; pointer-events: all; }
 
-  input:focus, select:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(88,166,255,0.12);
-  }
+.popup {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 20px; padding: 32px; width: 100%; max-width: 520px;
+  transform: scale(0.9) translateY(20px);
+  transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  margin: auto;
+}
+.overlay.show .popup { transform: scale(1) translateY(0); }
 
-  input::placeholder { color: var(--muted); opacity: 0.6; }
+.popup-header { text-align: center; margin-bottom: 22px; }
+.popup-avatar {
+  width: 60px; height: 60px; border-radius: 50%;
+  background: linear-gradient(135deg,rgba(88,166,255,0.2),rgba(63,185,80,0.2));
+  border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; margin: 0 auto 12px;
+}
+.popup-name { font-family: 'Playfair Display', serif; font-size: 1.5rem; }
+.popup-subtitle { color: var(--muted); font-size: 12px; margin-top: 4px; }
+.bmi-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 7px 18px; border-radius: 50px; font-weight: 700; font-size: 13px;
+  margin-top: 12px; border: 1.5px solid;
+}
 
-  .gender-group {
-    display: flex;
-    gap: 10px;
-  }
+.stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 20px 0; }
+.stat-box {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px 8px; text-align: center;
+  position: relative; overflow: hidden;
+}
+.stat-box::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+.stat-box.bmr::before  { background: var(--accent); }
+.stat-box.tdee::before { background: var(--accent2); }
+.stat-box.goal::before { background: var(--accent3); }
+.stat-label { font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+.stat-value { font-family:'Playfair Display',serif; font-size:1.4rem; line-height:1; }
+.stat-value.bmr-val  { color:var(--accent); }
+.stat-value.tdee-val { color:var(--accent2); }
+.stat-value.goal-val { color:var(--accent3); }
+.stat-unit { font-size:10px; color:var(--muted); margin-top:4px; }
 
-  .gender-btn {
-    flex: 1;
-    padding: 11px;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    color: var(--muted);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-    text-align: center;
-  }
+/* diet selector inside popup */
+.diet-select-wrap { margin: 16px 0; }
+.diet-select-wrap label { font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--muted); display:block; margin-bottom:8px; }
 
-  .gender-btn.active {
-    border-color: var(--accent);
-    background: rgba(88,166,255,0.1);
-    color: var(--accent);
-  }
+/* macro bars */
+.diet-section { margin-top: 4px; }
+.diet-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; flex-wrap:wrap; gap:8px; }
+.diet-name-tag { font-family:'Playfair Display',serif; font-size:1.05rem; color:var(--accent4); }
+.diet-range-hint { font-size:11px; color:var(--muted); background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:4px 10px; }
+.macro-bars { display:flex; flex-direction:column; gap:12px; }
+.macro-row { display:flex; flex-direction:column; gap:5px; }
+.macro-top { display:flex; align-items:center; justify-content:space-between; font-size:13px; }
+.macro-name { font-weight:600; display:flex; align-items:center; gap:6px; }
+.macro-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.macro-numbers { color:var(--muted); font-size:12px; text-align:right; }
+.macro-numbers strong { color:var(--text); font-size:14px; }
+.bar-track { height:8px; background:var(--bg); border-radius:10px; overflow:hidden; border:1px solid var(--border); }
+.bar-fill { height:100%; border-radius:10px; transition:width 0.5s cubic-bezier(0.34,1.2,0.64,1); }
+.sodium-row {
+  display:flex; align-items:center; justify-content:space-between;
+  background:rgba(210,168,255,0.06); border:1px solid rgba(210,168,255,0.15);
+  border-radius:10px; padding:10px 14px; margin-top:12px; font-size:13px;
+}
+.sodium-label { display:flex; align-items:center; gap:6px; font-weight:600; color:var(--accent4); }
+.sodium-val { color:var(--accent4); font-family:'Playfair Display',serif; font-size:1.1rem; }
+.sodium-unit { color:var(--muted); font-size:11px; }
 
-  .divider {
-    height: 1px;
-    background: var(--border);
-    margin: 24px 0;
-  }
+/* adjust */
+.adjust-toggle {
+  width:100%; padding:11px;
+  background:rgba(88,166,255,0.06); border:1px solid rgba(88,166,255,0.2);
+  border-radius:10px; color:var(--accent); font-family:'DM Sans',sans-serif;
+  font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s;
+  margin-top:18px; display:flex; align-items:center; justify-content:center; gap:8px;
+}
+.adjust-toggle:hover { background:rgba(88,166,255,0.12); }
+.adjust-toggle .arrow { transition:transform 0.3s; display:inline-block; }
+.adjust-toggle.open .arrow { transform:rotate(180deg); }
+.adjust-panel { overflow:hidden; max-height:0; transition:max-height 0.4s ease; }
+.adjust-panel.open { max-height:600px; }
+.adjust-inner {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:12px; padding:18px; margin-top:10px;
+  display:flex; flex-direction:column; gap:16px;
+}
+.adjust-note {
+  font-size:12px; color:var(--muted);
+  background:rgba(88,166,255,0.05); border:1px solid rgba(88,166,255,0.12);
+  border-radius:8px; padding:10px 12px; line-height:1.6;
+}
+.slider-row { display:flex; flex-direction:column; gap:6px; }
+.slider-top { display:flex; align-items:center; justify-content:space-between; font-size:13px; }
+.slider-name { font-weight:600; display:flex; align-items:center; gap:6px; }
+.slider-pct { font-family:'Playfair Display',serif; font-size:1.1rem; min-width:50px; text-align:right; }
+.slider-sub { display:flex; align-items:center; justify-content:space-between; font-size:11px; color:var(--muted); margin-top:2px; }
+input[type=range] {
+  -webkit-appearance:none; appearance:none;
+  height:5px; border-radius:10px; outline:none;
+  cursor:pointer; padding:0; border:none; box-shadow:none; width:100%;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance:none; appearance:none;
+  width:18px; height:18px; border-radius:50%;
+  border:2px solid var(--bg); cursor:pointer; transition:transform 0.15s;
+}
+input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.2); }
+.total-check {
+  text-align:center; font-size:12px; padding:8px; border-radius:8px; font-weight:600; transition:all 0.3s;
+}
+.total-check.ok   { background:rgba(63,185,80,0.1);   color:var(--accent2); border:1px solid rgba(63,185,80,0.2); }
+.total-check.warn { background:rgba(247,129,102,0.1); color:var(--accent3); border:1px solid rgba(247,129,102,0.2); }
+.reset-btn {
+  width:100%; padding:9px; border-radius:10px;
+  border:1px solid var(--border); background:transparent;
+  color:var(--muted); font-family:'DM Sans',sans-serif;
+  font-size:12px; font-weight:500; cursor:pointer; transition:all 0.2s;
+}
+.reset-btn:hover { background:var(--card); color:var(--text); border-color:var(--accent3); }
+.close-btn {
+  width:100%; padding:13px; border-radius:12px;
+  border:1px solid var(--border); background:transparent;
+  color:var(--muted); font-family:'DM Sans',sans-serif;
+  font-size:15px; font-weight:500; cursor:pointer; transition:all 0.2s; margin-top:18px;
+}
+.close-btn:hover { background:var(--surface); color:var(--text); border-color:var(--accent); }
 
-  .btn {
-    width: 100%;
-    padding: 15px;
-    border-radius: 12px;
-    border: none;
-    background: linear-gradient(135deg, #58a6ff, #3fb950);
-    color: #0d1117;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 16px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: opacity 0.2s, transform 0.15s;
-    margin-top: 8px;
-    letter-spacing: 0.3px;
-  }
+/* ══════════════ RESPONSIVE ══════════════ */
+@media(max-width:600px) {
+  .card { padding:24px 18px; }
+  .grid-2, .grid-3, .grid-4 { grid-template-columns:1fr; }
+  .stats-row { grid-template-columns:1fr 1fr; }
+  .stats-row .stat-box:last-child { grid-column:1/-1; }
+  .readiness-group { gap:4px; }
+  .readiness-btn { width:34px; height:34px; font-size:12px; }
+}
 
-  .btn:hover { opacity: 0.92; transform: translateY(-1px); }
-  .btn:active { transform: translateY(0); }
+/* soap summary tag */
+.soap-tag {
+  display:inline-block; font-size:10px; font-weight:700; letter-spacing:1.5px;
+  text-transform:uppercase; padding:3px 10px; border-radius:20px; margin-right:6px;
+}
+.soap-S { background:rgba(88,166,255,0.15);  color:var(--accent); }
+.soap-O { background:rgba(63,185,80,0.15);   color:var(--accent2); }
+.soap-A { background:rgba(227,179,65,0.15);  color:var(--accent5); }
+.soap-P { background:rgba(210,168,255,0.15); color:var(--accent4); }
 
-  /* POPUP */
-  .overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.75);
-    backdrop-filter: blur(6px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-    z-index: 100;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s;
-  }
-
-  .overlay.show {
-    opacity: 1;
-    pointer-events: all;
-  }
-
-  .popup {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 36px;
-    width: 100%;
-    max-width: 480px;
-    transform: scale(0.9) translateY(20px);
-    transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
-    position: relative;
-    overflow: hidden;
-  }
-
-  .overlay.show .popup {
-    transform: scale(1) translateY(0);
-  }
-
-  .popup-header {
-    text-align: center;
-    margin-bottom: 28px;
-  }
-
-  .popup-avatar {
-    width: 64px;
-    height: 64px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, rgba(88,166,255,0.2), rgba(63,185,80,0.2));
-    border: 2px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 26px;
-    margin: 0 auto 14px;
-  }
-
-  .popup-name {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.6rem;
-  }
-
-  .popup-subtitle {
-    color: var(--muted);
-    font-size: 13px;
-    margin-top: 4px;
-  }
-
-  .bmi-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 20px;
-    border-radius: 50px;
-    font-weight: 700;
-    font-size: 14px;
-    margin-top: 14px;
-    border: 1.5px solid;
-  }
-
-  .stats-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px;
-    margin: 24px 0;
-  }
-
-  .stat-box {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 18px;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .stat-box::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-  }
-
-  .stat-box.bmr::before { background: var(--accent); }
-  .stat-box.tdee::before { background: var(--accent2); }
-  .stat-box.goal::before { background: var(--accent3); }
-
-  .stat-box.goal { grid-column: 1 / -1; }
-
-  .stat-label {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 8px;
-  }
-
-  .stat-value {
-    font-family: 'Playfair Display', serif;
-    font-size: 2rem;
-    line-height: 1;
-  }
-
-  .stat-value.bmr-val { color: var(--accent); }
-  .stat-value.tdee-val { color: var(--accent2); }
-  .stat-value.goal-val { color: var(--accent3); }
-
-  .stat-unit {
-    font-size: 12px;
-    color: var(--muted);
-    margin-top: 4px;
-  }
-
-  .close-btn {
-    width: 100%;
-    padding: 13px;
-    border-radius: 12px;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--muted);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 15px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .close-btn:hover {
-    background: var(--surface);
-    color: var(--text);
-    border-color: var(--accent);
-  }
-
-  @media (max-width: 480px) {
-    .grid-2 { grid-template-columns: 1fr; }
-    .card { padding: 24px; }
-    .popup { padding: 28px 22px; }
-  }
+.info-chip {
+  display:inline-flex; align-items:center; gap:5px;
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:6px; padding:4px 10px; font-size:12px; color:var(--muted);
+  margin:3px;
+}
 </style>
 </head>
 <body>
 
-<div class="wrapper">
-  <header>
-    <div class="pill">Health Metrics</div>
-    <h1>Body Calculator</h1>
-    <p>BMI · BMR · TDEE — all in one place</p>
-  </header>
-
-  <div class="card">
-    <div class="grid-2">
-
-      <div class="field full">
-        <label>Patient Name</label>
-        <input type="text" id="name" placeholder="e.g. Ahmed Hassan">
-      </div>
-
-      <div class="field full">
-        <label>Gender</label>
-        <div class="gender-group">
-          <button class="gender-btn active" id="btn-male" onclick="selectGender('male')">♂ Male</button>
-          <button class="gender-btn" id="btn-female" onclick="selectGender('female')">♀ Female</button>
-        </div>
-      </div>
-
-      <div class="field">
-        <label>Weight (kg)</label>
-        <input type="number" id="weight" placeholder="70" min="1">
-      </div>
-
-      <div class="field">
-        <label>Height (cm)</label>
-        <input type="number" id="height" placeholder="175" min="1">
-      </div>
-
-      <div class="field full">
-        <label>Age (years)</label>
-        <input type="number" id="age" placeholder="30" min="1" max="120">
-      </div>
-
-      <div class="divider" style="grid-column:1/-1; margin:8px 0;"></div>
-
-      <div class="field full">
-        <label>Activity Level</label>
-        <select id="activity">
-          <option value="1.2">Sedentary — little or no exercise</option>
-          <option value="1.375">Lightly Active — 1–3 days/week</option>
-          <option value="1.55" selected>Moderately Active — 3–5 days/week</option>
-          <option value="1.725">Very Active — 6–7 days/week</option>
-          <option value="1.9">Extra Active — physical job + training</option>
-        </select>
-      </div>
-
-      <div class="field full">
-        <label>Goal Adjustment</label>
-        <select id="goal">
-          <option value="0">Maintain Weight — eat at TDEE</option>
-          <option value="-300">Mild Weight Loss — TDEE − 300 kcal</option>
-          <option value="-500">Weight Loss — TDEE − 500 kcal</option>
-          <option value="300">Mild Weight Gain — TDEE + 300 kcal</option>
-          <option value="500">Weight Gain — TDEE + 500 kcal</option>
-        </select>
-      </div>
-
-    </div>
-
-    <div style="margin-top:24px;">
-      <button class="btn" onclick="calculate()">Calculate Results →</button>
-    </div>
+<!-- ══════════════ PROGRESS ══════════════ -->
+<div class="progress-shell" id="progress-shell">
+  <div class="progress-top">
+    <span id="progress-label">Step 1 of 9</span>
+    <span id="progress-pct">11%</span>
   </div>
+  <div class="progress-bar-track"><div class="progress-bar-fill" id="progress-fill" style="width:11%"></div></div>
+  <div class="step-dots" id="step-dots"></div>
 </div>
 
-<!-- Popup -->
+<!-- ══════════════ STEP CONTAINER ══════════════ -->
+<div id="step-container"></div>
+
+<!-- ══════════════ RESULTS POPUP ══════════════ -->
 <div class="overlay" id="overlay" onclick="closePopup(event)">
-  <div class="popup" id="popup">
+  <div class="popup">
     <div class="popup-header">
-      <div class="popup-avatar" id="popup-avatar">👤</div>
-      <div class="popup-name" id="popup-name"></div>
-      <div class="popup-subtitle" id="popup-subtitle"></div>
-      <div id="bmi-badge" class="bmi-badge"></div>
+      <div class="popup-avatar" id="pop-avatar">👤</div>
+      <div class="popup-name"   id="pop-name"></div>
+      <div class="popup-subtitle" id="pop-subtitle"></div>
+      <div class="bmi-badge"    id="pop-bmi-badge"></div>
     </div>
 
-    <div class="stats-grid">
+    <!-- SOAP summary chips -->
+    <div id="pop-soap" style="margin-bottom:16px; line-height:2;"></div>
+
+    <div class="stats-row">
       <div class="stat-box bmr">
         <div class="stat-label">BMR</div>
-        <div class="stat-value bmr-val" id="res-bmr">—</div>
-        <div class="stat-unit">kcal/day (at rest)</div>
+        <div class="stat-value bmr-val" id="pop-bmr">—</div>
+        <div class="stat-unit">kcal at rest</div>
       </div>
       <div class="stat-box tdee">
         <div class="stat-label">TDEE</div>
-        <div class="stat-value tdee-val" id="res-tdee">—</div>
-        <div class="stat-unit">kcal/day (active)</div>
+        <div class="stat-value tdee-val" id="pop-tdee">—</div>
+        <div class="stat-unit">kcal active</div>
       </div>
       <div class="stat-box goal">
-        <div class="stat-label">Daily Target</div>
-        <div class="stat-value goal-val" id="res-goal">—</div>
-        <div class="stat-unit" id="res-goal-label">kcal/day</div>
+        <div class="stat-label">Target</div>
+        <div class="stat-value goal-val" id="pop-goal">—</div>
+        <div class="stat-unit">kcal / day</div>
       </div>
     </div>
 
-    <button class="close-btn" onclick="closePopup()">Close</button>
+    <!-- Diet selector -->
+    <div class="diet-select-wrap">
+      <label>Select Diet Plan</label>
+      <select id="pop-diet-select" onchange="onDietChange()" style="-webkit-appearance:none;appearance:none;
+        background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238b949e' d='M6 8L1 3h10z'/%3E%3C/svg%3E\");
+        background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;cursor:pointer;">
+        <option value="mediterranean">🫒 Mediterranean Diet</option>
+        <option value="dash">💙 DASH Diet</option>
+        <option value="lowcarb">💪 Low Carb High Protein</option>
+        <option value="keto">🥑 Keto</option>
+        <option value="if">⏱ Intermittent Fasting</option>
+        <option value="paleo">🥩 Paleo</option>
+      </select>
+    </div>
+
+    <!-- Macro bars -->
+    <div class="diet-section">
+      <div class="diet-header">
+        <div class="diet-name-tag" id="pop-diet-name">—</div>
+        <div class="diet-range-hint" id="pop-diet-hint">—</div>
+      </div>
+      <div class="macro-bars" id="pop-macro-bars"></div>
+      <div id="pop-sodium-wrap"></div>
+    </div>
+
+    <!-- Adjust panel -->
+    <button class="adjust-toggle" id="adj-toggle" onclick="toggleAdjust()">
+      ⚙ Adjust Macros &nbsp;<span class="arrow">▾</span>
+    </button>
+    <div class="adjust-panel" id="adj-panel">
+      <div class="adjust-inner">
+        <div class="adjust-note" id="adj-note"></div>
+        <div class="slider-row">
+          <div class="slider-top">
+            <div class="slider-name"><span class="macro-dot" style="background:var(--carb-color)"></span>Carbohydrates</div>
+            <div class="slider-pct" id="sl-carb-pct" style="color:var(--carb-color)">—</div>
+          </div>
+          <input type="range" id="sl-carb-input" min="5" max="80" style="accent-color:var(--carb-color)" oninput="onSlider('carb')">
+          <div class="slider-sub"><span id="sl-carb-g">—</span><span id="sl-carb-kcal">—</span></div>
+        </div>
+        <div class="slider-row">
+          <div class="slider-top">
+            <div class="slider-name"><span class="macro-dot" style="background:var(--prot-color)"></span>Protein</div>
+            <div class="slider-pct" id="sl-prot-pct" style="color:var(--prot-color)">—</div>
+          </div>
+          <input type="range" id="sl-prot-input" min="5" max="60" style="accent-color:var(--prot-color)" oninput="onSlider('prot')">
+          <div class="slider-sub"><span id="sl-prot-g">—</span><span id="sl-prot-kcal">—</span></div>
+        </div>
+        <div class="slider-row">
+          <div class="slider-top">
+            <div class="slider-name"><span class="macro-dot" style="background:var(--fat-color)"></span>Fat</div>
+            <div class="slider-pct" id="sl-fat-pct" style="color:var(--fat-color)">—</div>
+          </div>
+          <input type="range" id="sl-fat-input" min="5" max="80" style="accent-color:var(--fat-color)" oninput="onSlider('fat')">
+          <div class="slider-sub"><span id="sl-fat-g">—</span><span id="sl-fat-kcal">—</span></div>
+        </div>
+        <div class="total-check" id="total-check">Total: 100%</div>
+        <button class="reset-btn" onclick="resetSliders()">↺ Reset to diet defaults</button>
+      </div>
+    </div>
+
+    <button class="close-btn" onclick="closePopup()">← Back to Assessment</button>
   </div>
 </div>
 
+<!-- ══════════════ JAVASCRIPT ══════════════ -->
 <script>
-  let gender = 'male';
+/* ─── DIET DATA ─────────────────────────────────────────────────────────── */
+const DIETS = {
+  mediterranean:{ label:'Mediterranean Diet',    carb:[50,60], prot:[15,20], fat:[25,35], sodium:null },
+  dash:         { label:'DASH Diet',             carb:[55,55], prot:[18,18], fat:[27,27], sodium:1500 },
+  lowcarb:      { label:'Low Carb High Protein', carb:[10,30], prot:[25,35], fat:[30,50], sodium:null },
+  keto:         { label:'Keto',                  carb:[5,10],  prot:[20,25], fat:[70,75], sodium:null },
+  if:           { label:'Intermittent Fasting',  carb:[35,40], prot:[25,30], fat:[30,35], sodium:null },
+  paleo:        { label:'Paleo',                 carb:[20,30], prot:[25,35], fat:[35,45], sodium:null }
+};
+const mid=(a,b)=>Math.round((a+b)/2);
+const pctLabel=(mn,mx)=>mn===mx?`${mn}%`:`${mn}%–${mx}%`;
 
-  function selectGender(g) {
-    gender = g;
-    document.getElementById('btn-male').classList.toggle('active', g === 'male');
-    document.getElementById('btn-female').classList.toggle('active', g === 'female');
-  }
+/* ─── STATE ──────────────────────────────────────────────────────────────── */
+let currentStep = 0;
+let gender = 'male';
+let readiness = null;
+let adjOpen = false;
+let currentTarget = 0;
+let currentDiet = null;
+let sPct = { carb:50, prot:20, fat:30 };
 
-  function getBMIInfo(bmi) {
-    if (bmi < 18.5) return { label: 'Underweight', color: '#79c0ff', bg: 'rgba(121,192,255,0.12)', border: 'rgba(121,192,255,0.3)' };
-    if (bmi < 25)   return { label: 'Normal Weight', color: '#3fb950', bg: 'rgba(63,185,80,0.12)', border: 'rgba(63,185,80,0.3)' };
-    if (bmi < 30)   return { label: 'Overweight', color: '#e3b341', bg: 'rgba(227,179,65,0.12)', border: 'rgba(227,179,65,0.3)' };
-    if (bmi < 35)   return { label: 'Obese I  [30–35)', color: '#f0883e', bg: 'rgba(240,136,62,0.12)', border: 'rgba(240,136,62,0.3)' };
-    if (bmi < 40)   return { label: 'Obese II  [35–40)', color: '#f85149', bg: 'rgba(248,81,73,0.12)', border: 'rgba(248,81,73,0.3)' };
-    return           { label: 'Obese III  [40+]', color: '#ff7b72', bg: 'rgba(255,123,114,0.18)', border: 'rgba(255,123,114,0.4)' };
-  }
+// Collected answers
+const A = {};
 
-  function calculate() {
-    const name   = document.getElementById('name').value.trim() || 'Patient';
-    const weight = parseFloat(document.getElementById('weight').value);
-    const height = parseFloat(document.getElementById('height').value);
-    const age    = parseFloat(document.getElementById('age').value);
-    const actMul = parseFloat(document.getElementById('activity').value);
-    const goalAdj= parseFloat(document.getElementById('goal').value);
-    const goalSel= document.getElementById('goal');
-    const goalText = goalSel.options[goalSel.selectedIndex].text;
-
-    if (!weight || !height || !age) {
-      alert('Please fill in Weight, Height, and Age.');
-      return;
+/* ─── STEPS DEFINITION ───────────────────────────────────────────────────── */
+// Each step: { id, eyebrow, emoji, title, subtitle, render(container) }
+const STEPS = [
+  /* 0 – Contact */
+  {
+    id:'contact', eyebrow:'S — Subjective', emoji:'🧑‍⚕️', title:'Patient Contact',
+    subtitle:'Basic identification information',
+    render(c){
+      c.innerHTML=`
+      <div class="grid-2">
+        <div class="field full"><label>Full Name</label><input type="text" id="f-name" placeholder="e.g. Ahmed Hassan" value="${A.name||''}"></div>
+        <div class="field"><label>📞 Phone</label><input type="tel" id="f-phone" placeholder="(123) 456-7890" value="${A.phone||''}"></div>
+        <div class="field"><label>✉️ Email</label><input type="email" id="f-email" placeholder="taylor@example.com" value="${A.email||''}"></div>
+        <div class="field"><label>📅 Assessment Date</label><input type="date" id="f-date" value="${A.date||today()}"></div>
+        <div class="field"><label>Date of Birth</label><input type="date" id="f-dob" value="${A.dob||''}"></div>
+        <div class="field"><label>Gender</label>
+          <div class="gender-group">
+            <button class="gender-btn ${gender==='male'?'active':''}" id="gb-male" onclick="setGender('male')">♂ Male</button>
+            <button class="gender-btn ${gender==='female'?'active':''}" id="gb-female" onclick="setGender('female')">♀ Female</button>
+          </div>
+        </div>
+      </div>`;
+    },
+    save(){
+      A.name   = v('f-name');
+      A.phone  = v('f-phone');
+      A.email  = v('f-email');
+      A.date   = v('f-date');
+      A.dob    = v('f-dob');
+      A.gender = gender;
     }
+  },
 
-    // BMI
-    const heightM = height / 100;
-    const bmi = weight / (heightM * heightM);
+  /* 1 – Body measurements */
+  {
+    id:'body', eyebrow:'O — Objective', emoji:'📐', title:'Body Measurements',
+    subtitle:'Anthropometric data and weight history',
+    render(c){
+      c.innerHTML=`
+      <div class="grid-2">
+        <div class="field"><label>Height (cm)</label><input type="number" id="f-height" placeholder="170" value="${A.height||''}"></div>
+        <div class="field"><label>Current Weight (kg)</label><input type="number" id="f-weight" placeholder="70" value="${A.weight||''}"></div>
+        <div class="field"><label>Age (years)</label><input type="number" id="f-age" placeholder="30" min="1" max="120" value="${A.age||''}"></div>
+        <div class="field"><label>Desired Weight (kg)</label><input type="number" id="f-desired-wt" placeholder="" value="${A.desiredWt||''}"></div>
+        <div class="field"><label>Usual Adult Weight (kg)</label><input type="number" id="f-usual-wt" placeholder="" value="${A.usualWt||''}"></div>
+        <div class="field"><label>Highest Adult Weight (kg)</label><input type="number" id="f-max-wt" placeholder="" value="${A.maxWt||''}"></div>
+        <div class="field"><label>Lowest Adult Weight (kg)</label><input type="number" id="f-min-wt" placeholder="" value="${A.minWt||''}"></div>
+      </div>
+      <div style="margin-top:20px;">
+        <div class="sec-label" style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+          📏 Body measurements (cm) <span style="flex:1;height:1px;background:var(--border);display:block;"></span>
+        </div>
+        <div class="meas-box">
+          <div class="grid-4">
+            <div class="field"><label>Neck</label><input type="text" id="f-neck" placeholder="—" value="${A.neck||''}"></div>
+            <div class="field"><label>Left Arm</label><input type="text" id="f-arm-l" placeholder="—" value="${A.armL||''}"></div>
+            <div class="field"><label>Right Arm</label><input type="text" id="f-arm-r" placeholder="—" value="${A.armR||''}"></div>
+            <div class="field"><label>Chest</label><input type="text" id="f-chest" placeholder="—" value="${A.chest||''}"></div>
+            <div class="field"><label>Waist</label><input type="text" id="f-waist" placeholder="—" value="${A.waist||''}"></div>
+            <div class="field"><label>Hips</label><input type="text" id="f-hips" placeholder="—" value="${A.hips||''}"></div>
+            <div class="field"><label>Right Thigh</label><input type="text" id="f-thigh-r" placeholder="—" value="${A.thighR||''}"></div>
+            <div class="field"><label>Left Thigh</label><input type="text" id="f-thigh-l" placeholder="—" value="${A.thighL||''}"></div>
+          </div>
+        </div>
+      </div>`;
+    },
+    save(){
+      A.height=v('f-height'); A.weight=v('f-weight'); A.age=v('f-age');
+      A.desiredWt=v('f-desired-wt'); A.usualWt=v('f-usual-wt');
+      A.maxWt=v('f-max-wt'); A.minWt=v('f-min-wt');
+      A.neck=v('f-neck'); A.armL=v('f-arm-l'); A.armR=v('f-arm-r');
+      A.chest=v('f-chest'); A.waist=v('f-waist'); A.hips=v('f-hips');
+      A.thighR=v('f-thigh-r'); A.thighL=v('f-thigh-l');
+    }
+  },
 
-    // BMR — Mifflin-St Jeor
-    const bmr = gender === 'male'
-      ? (10 * weight) + (6.25 * height) - (5 * age) + 5
-      : (10 * weight) + (6.25 * height) - (5 * age) - 161;
+  /* 2 – Diet history */
+  {
+    id:'diet-history', eyebrow:'S — Subjective', emoji:'📋', title:'Diet History',
+    subtitle:'Previous dietary experience and consistency',
+    render(c){
+      c.innerHTML=`
+      <div class="grid-1">
+        <div class="field">
+          <label>Have you tried to follow a diet before?</label>
+          <div class="radio-group">
+            <label class="radio-option"><input type="radio" name="diet_tried" value="yes" ${A.dietTried==='yes'?'checked':''}> Yes</label>
+            <label class="radio-option"><input type="radio" name="diet_tried" value="no"  ${A.dietTried==='no'?'checked':''}> No</label>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label>If yes — which diet type?</label>
+            <select id="f-prev-diet">
+              ${['Keto / Low‑carb','Mediterranean','Intermittent fasting','Calorie counting / portion','Paleo / Whole30','Vegetarian / vegan','DASH / low‑sodium','Other'].map(o=>`<option ${A.prevDiet===o?'selected':''}>${o}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field">
+            <label>How long consistent?</label>
+            <select id="f-diet-duration">
+              ${['< 1 week','1–4 weeks','1–3 months','3–6 months','6–12 months','> 1 year'].map(o=>`<option ${A.dietDuration===o?'selected':''}>${o}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>What worked / what didn't</label>
+          <textarea id="f-diet-notes" placeholder="e.g. lost 5 kg but regained, felt tired on keto …">${A.dietNotes||''}</textarea>
+        </div>
+      </div>`;
+    },
+    save(){
+      const r=document.querySelector('input[name="diet_tried"]:checked');
+      A.dietTried=r?r.value:''; A.prevDiet=v('f-prev-diet');
+      A.dietDuration=v('f-diet-duration'); A.dietNotes=v('f-diet-notes');
+    }
+  },
 
-    const tdee   = bmr * actMul;
-    const target = tdee + goalAdj;
+  /* 3 – Goals & readiness */
+  {
+    id:'goals', eyebrow:'S — Subjective', emoji:'🎯', title:'Goals & Readiness',
+    subtitle:'What the patient wants to achieve today',
+    render(c){
+      const goals=[
+        ['weight_loss','Weight Loss'],['weight_gain','Weight Gain'],['muscle_gain','Muscle Gain'],
+        ['maintain_weight','Maintain Weight'],['blood_sugar','Manage Blood Sugar'],['more_energy','More Energy'],
+        ['gut_health','Gut Health'],['heart_health','Heart Health'],['hormonal','Hormonal / PCOS / Thyroid'],['wellness','General Wellness']
+      ];
+      const savedGoals=A.goals||[];
+      c.innerHTML=`
+      <div class="grid-1">
+        <div class="field">
+          <label>Primary goals today (check all that apply)</label>
+          <div class="checkbox-group">
+            ${goals.map(([val,lbl])=>`
+              <label class="check-option">
+                <input type="checkbox" name="goal" value="${val}" ${savedGoals.includes(val)?'checked':''}> ${lbl}
+              </label>`).join('')}
+          </div>
+        </div>
+        <div class="field" style="margin-top:8px;">
+          <label>Readiness to change &nbsp;<span style="font-weight:300;text-transform:none;letter-spacing:0">(1 = not ready → 10 = very ready)</span></label>
+          <div class="readiness-group" id="readiness-group">
+            ${[1,2,3,4,5,6,7,8,9,10].map(n=>`
+              <button class="readiness-btn ${(A.readiness||readiness)===n?'active':''}"
+                onclick="setReadiness(${n})">${n}</button>`).join('')}
+          </div>
+        </div>
+        <div class="field">
+          <label>Activity Level</label>
+          <select id="f-activity">
+            ${[
+              ['1.2','Sedentary — little or no exercise'],
+              ['1.375','Lightly Active — 1–3 days/week'],
+              ['1.55','Moderately Active — 3–5 days/week'],
+              ['1.725','Very Active — 6–7 days/week'],
+              ['1.9','Extra Active — physical job + training']
+            ].map(([val,lbl])=>`<option value="${val}" ${A.activity===val?'selected':''}>${lbl}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field">
+          <label>Goal Adjustment</label>
+          <select id="f-goaladj">
+            ${[
+              ['0','Maintain Weight — eat at TDEE'],
+              ['-300','Mild Weight Loss — TDEE − 300 kcal'],
+              ['-500','Weight Loss — TDEE − 500 kcal'],
+              ['300','Mild Weight Gain — TDEE + 300 kcal'],
+              ['500','Weight Gain — TDEE + 500 kcal']
+            ].map(([val,lbl])=>`<option value="${val}" ${A.goalAdj===val?'selected':''}>${lbl}</option>`).join('')}
+          </select>
+        </div>
+      </div>`;
+    },
+    save(){
+      A.goals=[...document.querySelectorAll('input[name="goal"]:checked')].map(el=>el.value);
+      A.readiness=readiness; A.activity=v('f-activity'); A.goalAdj=v('f-goaladj');
+    }
+  },
 
-    const bmiInfo = getBMIInfo(bmi);
+  /* 4 – Medical */
+  {
+    id:'medical', eyebrow:'O — Objective', emoji:'🩺', title:'Medical & Clinical',
+    subtitle:'Current diagnoses, medications, allergies, labs',
+    render(c){
+      const diags=[
+        'Diabetes / pre‑diabetes','Hypertension','High cholesterol','PCOS',
+        'Thyroid','GERD / reflux','IBS / gut issue','Favism (G6PD)','Depression / anxiety'
+      ];
+      const savedDiags=A.diagnoses||[];
+      c.innerHTML=`
+      <div class="grid-1">
+        <div class="field">
+          <label>Current diagnoses (check all)</label>
+          <div class="checkbox-group">
+            ${diags.map(d=>`
+              <label class="check-option">
+                <input type="checkbox" name="diag" value="${d}" ${savedDiags.includes(d)?'checked':''}> ${d}
+              </label>`).join('')}
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="field"><label>Past surgeries / major illnesses</label>
+            <textarea id="f-surgeries" placeholder="e.g. cholecystectomy&#10;appendectomy">${A.surgeries||''}</textarea></div>
+          <div class="field"><label>Current medications & supplements</label>
+            <textarea id="f-meds" placeholder="metformin 500mg&#10;vitamin D3">${A.meds||''}</textarea></div>
+          <div class="field"><label>Allergies / intolerances</label>
+            <textarea id="f-allergies" placeholder="penicillin&#10;gluten sensitivity">${A.allergies||''}</textarea></div>
+          <div class="field"><label>Recent labs (if known)</label>
+            <textarea id="f-labs" placeholder="HbA1c 6.1%&#10;LDL 130">${A.labs||''}</textarea></div>
+        </div>
+      </div>`;
+    },
+    save(){
+      A.diagnoses=[...document.querySelectorAll('input[name="diag"]:checked')].map(el=>el.value);
+      A.surgeries=v('f-surgeries'); A.meds=v('f-meds');
+      A.allergies=v('f-allergies'); A.labs=v('f-labs');
+    }
+  },
 
-    // Populate popup
-    document.getElementById('popup-avatar').textContent = gender === 'male' ? '👨' : '👩';
-    document.getElementById('popup-name').textContent = name;
-    document.getElementById('popup-subtitle').textContent =
-      `${gender === 'male' ? 'Male' : 'Female'} · ${age} yrs · ${weight} kg · ${height} cm`;
+  /* 5 – Gut health */
+  {
+    id:'gut', eyebrow:'S — Subjective', emoji:'🌿', title:'Gut Health',
+    subtitle:'Gastrointestinal symptoms and patterns',
+    render(c){
+      const symptoms=['Bloating / gas','Reflux / heartburn','Pain / cramps','None'];
+      const savedSymp=A.gutSymptoms||[];
+      c.innerHTML=`
+      <div class="grid-2">
+        <div class="field"><label>Bowel frequency</label>
+          <select id="f-bowel">
+            ${['1–2 per day','Every other day','2–3 per week','Irregular'].map(o=>`<option ${A.bowel===o?'selected':''}>${o}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field"><label>Stool consistency</label>
+          <select id="f-stool">
+            ${['Type 3–4 (normal)','Type 1–2 (constipation)','Type 5–6 (loose)'].map(o=>`<option ${A.stool===o?'selected':''}>${o}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field full">
+          <label>Symptoms</label>
+          <div class="checkbox-group">
+            ${symptoms.map(s=>`
+              <label class="check-option">
+                <input type="checkbox" name="gut-symp" value="${s}" ${savedSymp.includes(s)?'checked':''}> ${s}
+              </label>`).join('')}
+          </div>
+        </div>
+      </div>`;
+    },
+    save(){
+      A.bowel=v('f-bowel'); A.stool=v('f-stool');
+      A.gutSymptoms=[...document.querySelectorAll('input[name="gut-symp"]:checked')].map(el=>el.value);
+    }
+  },
 
-    const badge = document.getElementById('bmi-badge');
-    badge.textContent = `BMI ${bmi.toFixed(1)} — ${bmiInfo.label}`;
-    badge.style.color = bmiInfo.color;
-    badge.style.background = bmiInfo.bg;
-    badge.style.borderColor = bmiInfo.border;
+  /* 6 – Eating pattern */
+  {
+    id:'eating', eyebrow:'S — Subjective', emoji:'🥗', title:'Daily Eating Pattern',
+    subtitle:'Typical meals, fluids, preferences, and restrictions',
+    render(c){
+      c.innerHTML=`
+      <div class="grid-2">
+        <div class="field"><label>Breakfast (time + food)</label>
+          <textarea id="f-breakfast" placeholder="8am – oatmeal, berries">${A.breakfast||''}</textarea></div>
+        <div class="field"><label>Lunch</label>
+          <textarea id="f-lunch" placeholder="12:30 – chicken salad">${A.lunch||''}</textarea></div>
+        <div class="field"><label>Dinner</label>
+          <textarea id="f-dinner" placeholder="7pm – salmon, rice, veg">${A.dinner||''}</textarea></div>
+        <div class="field"><label>Snacks (what & when)</label>
+          <textarea id="f-snacks" placeholder="3pm – yogurt&#10;9pm – popcorn">${A.snacks||''}</textarea></div>
+        <div class="field"><label>🚰 Fluids per day</label>
+          <textarea id="f-fluids" placeholder="water ~6 cups&#10;coffee 1 cup">${A.fluids||''}</textarea></div>
+        <div class="field"><label>Favourite healthy food</label>
+          <textarea id="f-fav-food" placeholder="avocado, berries">${A.favFood||''}</textarea></div>
+        <div class="field"><label>Cravings</label>
+          <textarea id="f-cravings" placeholder="dark chocolate, chips">${A.cravings||''}</textarea></div>
+        <div class="field"><label>Foods you refuse / dislike</label>
+          <textarea id="f-refuse" placeholder="mushrooms, organ meats">${A.refuse||''}</textarea></div>
+        <div class="field"><label>Eat out / takeout frequency</label>
+          <select id="f-eatout">
+            ${['Rarely (1–2x/month)','Weekly (1–2x/week)','Several times/week','Daily'].map(o=>`<option ${A.eatout===o?'selected':''}>${o}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field"><label>🍺 Alcohol (optional)</label>
+          <select id="f-alcohol">
+            ${['None','1–2/week','3–5/week','Daily'].map(o=>`<option ${A.alcohol===o?'selected':''}>${o}</option>`).join('')}
+          </select>
+        </div>
+      </div>`;
+    },
+    save(){
+      A.breakfast=v('f-breakfast'); A.lunch=v('f-lunch');
+      A.dinner=v('f-dinner'); A.snacks=v('f-snacks');
+      A.fluids=v('f-fluids'); A.favFood=v('f-fav-food');
+      A.cravings=v('f-cravings'); A.refuse=v('f-refuse');
+      A.eatout=v('f-eatout'); A.alcohol=v('f-alcohol');
+    }
+  },
 
-    document.getElementById('res-bmr').textContent  = Math.round(bmr).toLocaleString();
-    document.getElementById('res-tdee').textContent = Math.round(tdee).toLocaleString();
-    document.getElementById('res-goal').textContent = Math.round(target).toLocaleString();
-    document.getElementById('res-goal-label').textContent = goalText;
+  /* 7 – Behaviours */
+  {
+    id:'behaviour', eyebrow:'S — Subjective', emoji:'🧠', title:'Behaviours & Context',
+    subtitle:'Eating habits, emotional triggers, cooking ability, support',
+    render(c){
+      const triggers=['Stress','Boredom','Sadness','Happiness / celebration','Not really'];
+      const savedTrigs=A.eatTriggers||[];
+      c.innerHTML=`
+      <div class="grid-1">
+        <div class="grid-2">
+          <div class="field"><label>Eating in front of screen?</label>
+            <select id="f-screen">
+              ${['Rarely','Sometimes','Often','Always'].map(o=>`<option ${A.screen===o?'selected':''}>${o}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field"><label>Eating standing / rushed?</label>
+            <select id="f-rushed">
+              ${['Rarely','Sometimes','Often'].map(o=>`<option ${A.rushed===o?'selected':''}>${o}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field"><label>Hunger level before meals</label>
+            <select id="f-hunger">
+              ${['1–2 (famished)','3–4 (hungry)','5–6 (mild hunger)','7–8 (not hungry)','9–10 (stuffed)'].map(o=>`<option ${A.hunger===o?'selected':''}>${o}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field"><label>Support system</label>
+            <select id="f-support">
+              ${['Supportive partner / family','Neutral','Not supportive','Self‑motivated alone'].map(o=>`<option ${A.support===o?'selected':''}>${o}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Emotional eating triggers</label>
+          <div class="checkbox-group">
+            ${triggers.map(t=>`
+              <label class="check-option">
+                <input type="checkbox" name="trigger" value="${t}" ${savedTrigs.includes(t)?'checked':''}> ${t}
+              </label>`).join('')}
+          </div>
+        </div>
+        <div class="field">
+          <label>👩‍🍳 Ability & motivation to prepare meals?</label>
+          <div class="radio-group">
+            ${['Yes, fully','Mostly yes','Sometimes / limited','Rarely or no time'].map(o=>`
+              <label class="radio-option">
+                <input type="radio" name="cook" value="${o}" ${A.cook===o?'checked':''}> ${o}
+              </label>`).join('')}
+          </div>
+        </div>
+      </div>`;
+    },
+    save(){
+      A.screen=v('f-screen'); A.rushed=v('f-rushed');
+      A.hunger=v('f-hunger'); A.support=v('f-support');
+      A.eatTriggers=[...document.querySelectorAll('input[name="trigger"]:checked')].map(el=>el.value);
+      const cr=document.querySelector('input[name="cook"]:checked');
+      A.cook=cr?cr.value:'';
+    }
+  },
 
-    document.getElementById('overlay').classList.add('show');
-  }
-
-  function closePopup(e) {
-    if (!e || e.target === document.getElementById('overlay')) {
-      document.getElementById('overlay').classList.remove('show');
+  /* 8 – Lifestyle & budget */
+  {
+    id:'lifestyle', eyebrow:'A / P — Assessment & Plan', emoji:'😴', title:'Lifestyle, Activity & Budget',
+    subtitle:'Sleep, exercise, job, barriers, and food budget',
+    render(c){
+      const exTypes=['Cardio / walking','Strength / weights','Yoga / Pilates','None'];
+      const savedEx=A.exTypes||[];
+      c.innerHTML=`
+      <div class="grid-2">
+        <div class="field"><label>Job / occupation</label>
+          <input type="text" id="f-job" placeholder="e.g. teacher, nurse" value="${A.job||''}"></div>
+        <div class="field"><label>Sleep (hours/night)</label>
+          <select id="f-sleep">
+            ${['< 5h','5–6h','7–8h','8h+'].map(o=>`<option ${A.sleep===o?'selected':''}>${o}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field"><label>Sleep quality</label>
+          <select id="f-sleep-q">
+            ${['Restless / poor','Fair','Good','Very restful'].map(o=>`<option ${A.sleepQ===o?'selected':''}>${o}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field"><label>Stress level</label>
+          <select id="f-stress">
+            ${['1–3 (low)','4–6 (moderate)','7–8 (high)','9–10 (very high)'].map(o=>`<option ${A.stress===o?'selected':''}>${o}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field full">
+          <label>Exercise type (check all)</label>
+          <div class="checkbox-group">
+            ${exTypes.map(t=>`
+              <label class="check-option">
+                <input type="checkbox" name="ex-type" value="${t}" ${savedEx.includes(t)?'checked':''}> ${t}
+              </label>`).join('')}
+          </div>
+        </div>
+        <div class="field"><label>Frequency (days/week)</label>
+          <input type="text" id="f-ex-freq" placeholder="e.g. 3" value="${A.exFreq||''}"></div>
+        <div class="field"><label>Duration (min)</label>
+          <input type="text" id="f-ex-dur" placeholder="30" value="${A.exDur||''}"></div>
+        <div class="field"><label>Intensity</label>
+          <select id="f-ex-int">
+            ${['Light','Moderate','Vigorous'].map(o=>`<option ${A.exInt===o?'selected':''}>${o}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field"><label>💰 Food budget</label>
+          <input type="text" id="f-budget" placeholder="e.g. $70/week" value="${A.budget||''}"></div>
+        <div class="field"><label>Other barriers</label>
+          <input type="text" id="f-barriers" placeholder="time, transport, budget…" value="${A.barriers||''}"></div>
+      </div>`;
+    },
+    save(){
+      A.job=v('f-job'); A.sleep=v('f-sleep'); A.sleepQ=v('f-sleep-q');
+      A.stress=v('f-stress');
+      A.exTypes=[...document.querySelectorAll('input[name="ex-type"]:checked')].map(el=>el.value);
+      A.exFreq=v('f-ex-freq'); A.exDur=v('f-ex-dur'); A.exInt=v('f-ex-int');
+      A.budget=v('f-budget'); A.barriers=v('f-barriers');
     }
   }
+];
 
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') document.getElementById('overlay').classList.remove('show');
+const TOTAL = STEPS.length;
+
+/* ─── HELPERS ────────────────────────────────────────────────────────────── */
+function v(id){ const el=document.getElementById(id); return el?el.value.trim():''; }
+function today(){ return new Date().toISOString().split('T')[0]; }
+function setGender(g){
+  gender=g;
+  document.getElementById('gb-male')?.classList.toggle('active',g==='male');
+  document.getElementById('gb-female')?.classList.toggle('active',g==='female');
+}
+function setReadiness(n){
+  readiness=n;
+  A.readiness=n;
+  document.querySelectorAll('.readiness-btn').forEach(b=>{
+    b.classList.toggle('active', parseInt(b.textContent)===n);
   });
-</script>
+}
 
+/* ─── RENDER STEP ────────────────────────────────────────────────────────── */
+function renderStep(idx){
+  const s=STEPS[idx];
+  const pct=Math.round(((idx+1)/TOTAL)*100);
+
+  // Progress
+  document.getElementById('progress-label').textContent=`Step ${idx+1} of ${TOTAL}`;
+  document.getElementById('progress-pct').textContent=`${pct}%`;
+  document.getElementById('progress-fill').style.width=pct+'%';
+
+  // Dots
+  const dots=document.getElementById('step-dots');
+  dots.innerHTML=STEPS.map((_,i)=>`<div class="step-dot ${i<idx?'done':i===idx?'active':''}" onclick="goToStep(${i})"></div>`).join('');
+
+  // Card
+  const container=document.getElementById('step-container');
+  container.innerHTML=`
+    <div class="card">
+      <div class="step-header">
+        <div class="step-eyebrow"><span class="emoji">${s.emoji}</span>${s.eyebrow}</div>
+        <div class="step-title">${s.title}</div>
+        <div class="step-subtitle">${s.subtitle}</div>
+      </div>
+      <div id="step-fields"></div>
+      <div class="nav-row">
+        ${idx>0?`<button class="btn-prev" onclick="prevStep()">← Back</button>`:''}
+        <button class="btn-next" onclick="nextStep()">
+          ${idx===TOTAL-1?'✓ Complete & Calculate →':'Continue →'}
+        </button>
+      </div>
+    </div>`;
+
+  s.render(document.getElementById('step-fields'));
+  // re-init gender buttons state after render
+  if(s.id==='contact'){
+    document.getElementById('gb-male')?.classList.toggle('active',gender==='male');
+    document.getElementById('gb-female')?.classList.toggle('active',gender==='female');
+  }
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function goToStep(idx){
+  if(idx>currentStep) return; // can only go back
+  STEPS[currentStep].save();
+  currentStep=idx;
+  renderStep(currentStep);
+}
+
+function nextStep(){
+  STEPS[currentStep].save();
+  if(currentStep<TOTAL-1){
+    currentStep++;
+    renderStep(currentStep);
+  } else {
+    showResults();
+  }
+}
+function prevStep(){
+  STEPS[currentStep].save();
+  if(currentStep>0){ currentStep--; renderStep(currentStep); }
+}
+
+/* ─── BMI / BMR / TDEE ───────────────────────────────────────────────────── */
+function getBMIInfo(bmi){
+  if(bmi<18.5) return{label:'Underweight',   color:'#79c0ff',bg:'rgba(121,192,255,0.12)',border:'rgba(121,192,255,0.3)'};
+  if(bmi<25)   return{label:'Normal Weight', color:'#3fb950',bg:'rgba(63,185,80,0.12)',  border:'rgba(63,185,80,0.3)'};
+  if(bmi<30)   return{label:'Overweight',    color:'#e3b341',bg:'rgba(227,179,65,0.12)', border:'rgba(227,179,65,0.3)'};
+  if(bmi<35)   return{label:'Obese I [30–35)',color:'#f0883e',bg:'rgba(240,136,62,0.12)', border:'rgba(240,136,62,0.3)'};
+  if(bmi<40)   return{label:'Obese II [35–40)',color:'#f85149',bg:'rgba(248,81,73,0.12)', border:'rgba(248,81,73,0.3)'};
+  return        {label:'Obese III [40+]',    color:'#ff7b72',bg:'rgba(255,123,114,0.18)',border:'rgba(255,123,114,0.4)'};
+}
+
+function showResults(){
+  const weight=parseFloat(A.weight)||0;
+  const height=parseFloat(A.height)||0;
+  const age=parseFloat(A.age)||0;
+  const actMul=parseFloat(A.activity)||1.55;
+  const goalAdj=parseFloat(A.goalAdj)||0;
+
+  if(!weight||!height||!age){
+    alert('Please go back and fill in Weight, Height, and Age (Step 2).');
+    return;
+  }
+
+  const heightM=height/100;
+  const bmi=weight/(heightM*heightM);
+  const bmr=gender==='male'
+    ?(10*weight)+(6.25*height)-(5*age)+5
+    :(10*weight)+(6.25*height)-(5*age)-161;
+  const tdee=bmr*actMul;
+  const target=Math.round(tdee+goalAdj);
+  currentTarget=target;
+
+  const bmiInfo=getBMIInfo(bmi);
+
+  // Header
+  document.getElementById('pop-avatar').textContent=gender==='male'?'👨':'👩';
+  document.getElementById('pop-name').textContent=A.name||'Patient';
+  document.getElementById('pop-subtitle').textContent=
+    `${gender==='male'?'Male':'Female'} · ${age} yrs · ${weight} kg · ${height} cm`;
+
+  const badge=document.getElementById('pop-bmi-badge');
+  badge.textContent=`BMI ${bmi.toFixed(1)} — ${bmiInfo.label}`;
+  badge.style.color=bmiInfo.color; badge.style.background=bmiInfo.bg; badge.style.borderColor=bmiInfo.border;
+
+  // SOAP chips
+  const soapEl=document.getElementById('pop-soap');
+  const chips=[];
+  if(A.goals?.length) chips.push(`<span class="soap-tag soap-S">S</span>${A.goals.join(', ')}`);
+  if(A.diagnoses?.length) chips.push(`<span class="soap-tag soap-O">O</span>${A.diagnoses.join(', ')}`);
+  if(A.stress) chips.push(`<span class="soap-tag soap-A">A</span>Stress: ${A.stress}`);
+  if(A.dietTried) chips.push(`<span class="soap-tag soap-P">P</span>Prev diet: ${A.dietTried==='yes'?A.prevDiet:'None'}`);
+  soapEl.innerHTML=chips.map(ch=>`<div class="info-chip" style="margin:3px">${ch}</div>`).join('');
+
+  // Stats
+  document.getElementById('pop-bmr').textContent=Math.round(bmr).toLocaleString();
+  document.getElementById('pop-tdee').textContent=Math.round(tdee).toLocaleString();
+  document.getElementById('pop-goal').textContent=target.toLocaleString();
+
+  // Diet
+  const dietKey=document.getElementById('pop-diet-select').value;
+  currentDiet=DIETS[dietKey];
+  updateDietUI();
+
+  // Reset adjust panel
+  adjOpen=false;
+  document.getElementById('adj-toggle').classList.remove('open');
+  document.getElementById('adj-panel').classList.remove('open');
+
+  document.getElementById('overlay').classList.add('show');
+}
+
+/* ─── DIET CHANGE ────────────────────────────────────────────────────────── */
+function onDietChange(){
+  currentDiet=DIETS[document.getElementById('pop-diet-select').value];
+  updateDietUI();
+}
+
+function updateDietUI(){
+  const d=currentDiet;
+  document.getElementById('pop-diet-name').textContent=d.label;
+  document.getElementById('pop-diet-hint').textContent=
+    `C ${pctLabel(d.carb[0],d.carb[1])} · P ${pctLabel(d.prot[0],d.prot[1])} · F ${pctLabel(d.fat[0],d.fat[1])}`;
+  document.getElementById('adj-note').textContent=
+    `Defaults are the midpoint of ${d.label} ranges. Drag sliders to fine-tune. Keep total = 100%.`;
+  initSliders();
+  renderMacroBars();
+}
+
+/* ─── MACRO BARS ─────────────────────────────────────────────────────────── */
+function renderMacroBars(){
+  const cal=currentTarget;
+  const macros=[
+    {name:'Carbohydrates',color:'var(--carb-color)',pct:sPct.carb,kcalPerG:4,range:[currentDiet.carb[0],currentDiet.carb[1]]},
+    {name:'Protein',      color:'var(--prot-color)',pct:sPct.prot,kcalPerG:4,range:[currentDiet.prot[0],currentDiet.prot[1]]},
+    {name:'Fat',          color:'var(--fat-color)', pct:sPct.fat, kcalPerG:9,range:[currentDiet.fat[0], currentDiet.fat[1]]},
+  ];
+  document.getElementById('pop-macro-bars').innerHTML=macros.map(m=>{
+    const kcal=Math.round(cal*m.pct/100);
+    const g=Math.round(kcal/m.kcalPerG);
+    return`<div class="macro-row">
+      <div class="macro-top">
+        <div class="macro-name">
+          <span class="macro-dot" style="background:${m.color}"></span>${m.name}
+          <span style="color:var(--muted);font-size:11px;font-weight:400">(${pctLabel(m.range[0],m.range[1])})</span>
+        </div>
+        <div class="macro-numbers"><strong>${m.pct}%</strong> · ${g}g · ${kcal} kcal</div>
+      </div>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.min(100,m.pct)}%;background:${m.color}"></div></div>
+    </div>`;
+  }).join('');
+
+  const sw=document.getElementById('pop-sodium-wrap');
+  sw.innerHTML=currentDiet.sodium?`
+    <div class="sodium-row">
+      <div class="sodium-label">🧂 Sodium limit</div>
+      <div><span class="sodium-val">${currentDiet.sodium.toLocaleString()}</span> <span class="sodium-unit">mg/day</span></div>
+    </div>`:'';}
+
+/* ─── SLIDERS ────────────────────────────────────────────────────────────── */
+function initSliders(){
+  const d=currentDiet;
+  sPct.carb=mid(d.carb[0],d.carb[1]);
+  sPct.prot=mid(d.prot[0],d.prot[1]);
+  sPct.fat =mid(d.fat[0], d.fat[1]);
+  ['carb','prot','fat'].forEach(k=>{
+    document.getElementById(`sl-${k}-input`).value=sPct[k];
+  });
+  updateSliderUI();
+}
+
+function onSlider(key){
+  sPct[key]=parseInt(document.getElementById(`sl-${key}-input`).value);
+  updateSliderUI();
+  renderMacroBars();
+}
+
+function resetSliders(){ initSliders(); renderMacroBars(); }
+
+function updateSliderUI(){
+  const cal=currentTarget;
+  [
+    {key:'carb',el:'sl-carb',kcalPerG:4,color:'var(--carb-color)'},
+    {key:'prot',el:'sl-prot',kcalPerG:4,color:'var(--prot-color)'},
+    {key:'fat', el:'sl-fat', kcalPerG:9,color:'var(--fat-color)'},
+  ].forEach(r=>{
+    const pct=sPct[r.key];
+    const kcal=Math.round(cal*pct/100);
+    const g=Math.round(kcal/r.kcalPerG);
+    document.getElementById(`${r.el}-pct`).textContent=`${pct}%`;
+    document.getElementById(`${r.el}-g`).textContent=`${g} g`;
+    document.getElementById(`${r.el}-kcal`).textContent=`${kcal} kcal`;
+    const inp=document.getElementById(`${r.el}-input`);
+    const mn=parseInt(inp.min),mx=parseInt(inp.max);
+    const fp=((pct-mn)/(mx-mn))*100;
+    inp.style.background=`linear-gradient(to right,${r.color} ${fp}%,var(--border) ${fp}%)`;
+  });
+  const total=sPct.carb+sPct.prot+sPct.fat;
+  const tc=document.getElementById('total-check');
+  if(total===100){
+    tc.className='total-check ok';
+    tc.textContent='✓ Total: 100% — perfectly balanced';
+  } else {
+    tc.className='total-check warn';
+    tc.textContent=`⚠ Total: ${total}% — adjust to reach 100%`;
+  }
+}
+
+function toggleAdjust(){
+  adjOpen=!adjOpen;
+  document.getElementById('adj-toggle').classList.toggle('open',adjOpen);
+  document.getElementById('adj-panel').classList.toggle('open',adjOpen);
+}
+
+function closePopup(e){
+  if(!e||e.target===document.getElementById('overlay'))
+    document.getElementById('overlay').classList.remove('show');
+}
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape') document.getElementById('overlay').classList.remove('show');
+});
+
+/* ─── BOOT ───────────────────────────────────────────────────────────────── */
+renderStep(0);
+</script>
 </body>
 </html>
