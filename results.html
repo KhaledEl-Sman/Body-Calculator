@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Patient Results — RD Assessment</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:#0d1117; --surface:#161b22; --card:#1c2333; --border:#30363d;
+  --accent:#58a6ff; --accent2:#3fb950; --accent3:#f78166; --accent4:#d2a8ff; --accent5:#e3b341;
+  --text:#e6edf3; --muted:#8b949e;
+  --carb-color:#58a6ff; --prot-color:#3fb950; --fat-color:#f0883e;
+}
+body {
+  background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif;
+  min-height:100vh; padding:32px 16px 80px;
+  background-image:radial-gradient(ellipse at 15% 50%,rgba(88,166,255,0.05) 0%,transparent 55%),
+    radial-gradient(ellipse at 85% 10%,rgba(63,185,80,0.04) 0%,transparent 50%);
+}
+.page { max-width:720px; margin:0 auto; display:flex; flex-direction:column; gap:22px; }
+
+/* back button */
+.back-btn {
+  display:inline-flex; align-items:center; gap:8px;
+  background:var(--surface); border:1px solid var(--border); border-radius:10px;
+  padding:10px 18px; color:var(--muted); font-family:'DM Sans',sans-serif;
+  font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; text-decoration:none;
+  width:fit-content;
+}
+.back-btn:hover { border-color:var(--accent); color:var(--text); }
+
+/* section card */
+.section {
+  background:var(--card); border:1px solid var(--border); border-radius:20px;
+  padding:28px 28px; position:relative; overflow:hidden;
+  animation:fadeUp 0.5s ease both;
+}
+.section::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+.section.s-blue::before   { background:var(--accent); }
+.section.s-green::before  { background:var(--accent2); }
+.section.s-orange::before { background:var(--accent3); }
+.section.s-purple::before { background:var(--accent4); }
+.section.s-yellow::before { background:var(--accent5); }
+@keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+.section-eyebrow { font-size:10px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+.section-title { font-family:'Playfair Display',serif; font-size:1.3rem; margin-bottom:18px; }
+
+/* patient header */
+.patient-header { display:flex; align-items:center; gap:20px; flex-wrap:wrap; }
+.avatar { width:70px; height:70px; border-radius:50%; background:linear-gradient(135deg,rgba(88,166,255,0.2),rgba(63,185,80,0.2)); border:2px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:30px; flex-shrink:0; }
+.patient-info { flex:1; }
+.patient-name { font-family:'Playfair Display',serif; font-size:1.8rem; line-height:1.2; }
+.patient-meta { color:var(--muted); font-size:13px; margin-top:4px; }
+.bmi-badge { display:inline-flex; align-items:center; gap:8px; padding:7px 18px; border-radius:50px; font-weight:700; font-size:13px; margin-top:10px; border:1.5px solid; }
+
+/* equation note */
+.eq-note { background:rgba(88,166,255,0.06); border:1px solid rgba(88,166,255,0.15); border-radius:10px; padding:12px 16px; font-size:12px; color:var(--muted); line-height:1.7; margin-bottom:18px; }
+.eq-note strong { color:var(--accent); }
+
+/* stats grid */
+.stats-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+.stat-box { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:18px 12px; text-align:center; position:relative; overflow:hidden; }
+.stat-box::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+.stat-box.bmr::before   { background:var(--accent); }
+.stat-box.tdee::before  { background:var(--accent2); }
+.stat-box.trgt::before  { background:var(--accent3); }
+.stat-box.bmi-box::before { background:var(--accent5); }
+.stat-label { font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+.stat-value { font-family:'Playfair Display',serif; font-size:1.6rem; line-height:1; }
+.stat-value.c-blue   { color:var(--accent); }
+.stat-value.c-green  { color:var(--accent2); }
+.stat-value.c-orange { color:var(--accent3); }
+.stat-value.c-yellow { color:var(--accent5); }
+.stat-unit { font-size:11px; color:var(--muted); margin-top:5px; }
+
+/* soap rows */
+.soap-grid { display:flex; flex-direction:column; gap:10px; }
+.soap-row { display:flex; gap:12px; align-items:flex-start; }
+.soap-tag { flex-shrink:0; font-size:10px; font-weight:800; letter-spacing:1.5px; text-transform:uppercase; padding:4px 12px; border-radius:20px; margin-top:1px; }
+.soap-S { background:rgba(88,166,255,0.15);  color:var(--accent); }
+.soap-O { background:rgba(63,185,80,0.15);   color:var(--accent2); }
+.soap-A { background:rgba(227,179,65,0.15);  color:var(--accent5); }
+.soap-P { background:rgba(210,168,255,0.15); color:var(--accent4); }
+.soap-content { font-size:13px; color:var(--text); line-height:1.6; }
+.soap-content .key { color:var(--muted); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; }
+
+/* chips */
+.chip { display:inline-flex; align-items:center; background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:3px 10px; font-size:12px; color:var(--muted); margin:2px; }
+
+/* diet */
+label.field-label { font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--muted); display:block; margin-bottom:8px; }
+select.diet-sel {
+  background:var(--surface); border:1px solid var(--border); border-radius:10px; color:var(--text);
+  font-family:'DM Sans',sans-serif; font-size:15px; padding:11px 14px; width:100%;
+  -webkit-appearance:none; appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238b949e' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 14px center; padding-right:36px;
+  cursor:pointer; transition:border-color 0.2s,box-shadow 0.2s;
+}
+select.diet-sel:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(88,166,255,0.1); }
+
+.diet-header-row { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin:14px 0; }
+.diet-name-tag { font-family:'Playfair Display',serif; font-size:1.1rem; color:var(--accent4); }
+.diet-range-hint { font-size:11px; color:var(--muted); background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:4px 10px; }
+
+.macro-bars { display:flex; flex-direction:column; gap:14px; }
+.macro-row-wrap { display:flex; flex-direction:column; gap:5px; }
+.macro-top { display:flex; align-items:center; justify-content:space-between; font-size:13px; }
+.macro-name { font-weight:600; display:flex; align-items:center; gap:6px; }
+.macro-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.macro-nums { color:var(--muted); font-size:12px; text-align:right; }
+.macro-nums strong { color:var(--text); font-size:14px; }
+.bar-track { height:9px; background:var(--bg); border-radius:10px; overflow:hidden; border:1px solid var(--border); }
+.bar-fill { height:100%; border-radius:10px; transition:width 0.6s cubic-bezier(0.34,1.2,0.64,1); }
+
+.sodium-row { display:flex; align-items:center; justify-content:space-between; background:rgba(210,168,255,0.06); border:1px solid rgba(210,168,255,0.15); border-radius:10px; padding:10px 16px; margin-top:14px; font-size:13px; }
+.sodium-label { display:flex; align-items:center; gap:6px; font-weight:600; color:var(--accent4); }
+.sodium-val { color:var(--accent4); font-family:'Playfair Display',serif; font-size:1.2rem; }
+.sodium-unit { color:var(--muted); font-size:11px; }
+
+/* adjust */
+.adjust-toggle { width:100%; padding:12px; background:rgba(88,166,255,0.06); border:1px solid rgba(88,166,255,0.2); border-radius:10px; color:var(--accent); font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; margin-top:18px; display:flex; align-items:center; justify-content:center; gap:8px; }
+.adjust-toggle:hover { background:rgba(88,166,255,0.12); }
+.adjust-toggle .arrow { transition:transform 0.3s; display:inline-block; }
+.adjust-toggle.open .arrow { transform:rotate(180deg); }
+.adjust-panel { overflow:hidden; max-height:0; transition:max-height 0.4s ease; }
+.adjust-panel.open { max-height:600px; }
+.adjust-inner { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px; margin-top:12px; display:flex; flex-direction:column; gap:16px; }
+.adjust-note { font-size:12px; color:var(--muted); background:rgba(88,166,255,0.05); border:1px solid rgba(88,166,255,0.12); border-radius:8px; padding:10px 14px; line-height:1.7; }
+
+.slider-row { display:flex; flex-direction:column; gap:6px; }
+.slider-top { display:flex; align-items:center; justify-content:space-between; font-size:13px; }
+.slider-name { font-weight:600; display:flex; align-items:center; gap:6px; }
+.slider-pct { font-family:'Playfair Display',serif; font-size:1.15rem; min-width:52px; text-align:right; }
+.slider-sub { display:flex; align-items:center; justify-content:space-between; font-size:11px; color:var(--muted); margin-top:2px; }
+
+input[type=range] { -webkit-appearance:none; appearance:none; height:5px; border-radius:10px; outline:none; cursor:pointer; padding:0; border:none; box-shadow:none; width:100%; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:18px; height:18px; border-radius:50%; border:2px solid var(--bg); cursor:pointer; transition:transform 0.15s; }
+input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.2); }
+
+.total-check { text-align:center; font-size:12px; padding:9px; border-radius:8px; font-weight:600; transition:all 0.3s; }
+.total-check.ok   { background:rgba(63,185,80,0.1);   color:var(--accent2); border:1px solid rgba(63,185,80,0.2); }
+.total-check.warn { background:rgba(247,129,102,0.1); color:var(--accent3); border:1px solid rgba(247,129,102,0.2); }
+
+.reset-btn { width:100%; padding:10px; border-radius:10px; border:1px solid var(--border); background:transparent; color:var(--muted); font-family:'DM Sans',sans-serif; font-size:12px; font-weight:500; cursor:pointer; transition:all 0.2s; }
+.reset-btn:hover { background:var(--card); color:var(--text); border-color:var(--accent3); }
+
+/* no-data */
+.no-data { text-align:center; padding:60px 20px; }
+.no-data h2 { font-family:'Playfair Display',serif; font-size:1.6rem; margin-bottom:12px; }
+.no-data p { color:var(--muted); margin-bottom:24px; }
+.go-btn { display:inline-block; padding:13px 28px; border-radius:12px; background:linear-gradient(135deg,#58a6ff,#3fb950); color:#0d1117; font-family:'DM Sans',sans-serif; font-size:15px; font-weight:700; text-decoration:none; transition:opacity 0.2s; }
+.go-btn:hover { opacity:0.9; }
+
+@media(max-width:580px) {
+  .stats-grid { grid-template-columns:1fr 1fr; }
+  .stats-grid .stat-box:last-child { grid-column:1/-1; }
+  .section { padding:22px 16px; }
+  .patient-header { flex-direction:column; gap:12px; }
+}
+</style>
+</head>
+<body>
+<div class="page" id="page">
+  <div class="no-data" id="no-data" style="display:none">
+    <h2>No Assessment Data</h2>
+    <p>Please complete the patient assessment first.</p>
+    <a href="assessment.html" class="go-btn">← Go to Assessment</a>
+  </div>
+</div>
+
+<script>
+/* ─── DIET DATA ──────────────────────────────────────────────────────────── */
+const DIETS = {
+  mediterranean:{ label:'Mediterranean Diet',    emoji:'🫒', carb:[50,60], prot:[15,20], fat:[25,35], sodium:null },
+  dash:         { label:'DASH Diet',             emoji:'💙', carb:[55,55], prot:[18,18], fat:[27,27], sodium:1500 },
+  lowcarb:      { label:'Low Carb High Protein', emoji:'💪', carb:[10,30], prot:[25,35], fat:[30,50], sodium:null },
+  keto:         { label:'Keto',                  emoji:'🥑', carb:[5,10],  prot:[20,25], fat:[70,75], sodium:null },
+  if:           { label:'Intermittent Fasting',  emoji:'⏱',  carb:[35,40], prot:[25,30], fat:[30,35], sodium:null },
+  paleo:        { label:'Paleo',                 emoji:'🥩', carb:[20,30], prot:[25,35], fat:[35,45], sodium:null }
+};
+const mid=(a,b)=>Math.round((a+b)/2);
+const pctLbl=(mn,mx)=>mn===mx?`${mn}%`:`${mn}%–${mx}%`;
+
+let A={}, currentTarget=0, currentDiet=null, adjOpen=false;
+let sPct={carb:50,prot:20,fat:30};
+
+/* ─── LOAD ─────────────────────────────────────────────────────────────── */
+const raw=sessionStorage.getItem('rdAssessment');
+if(!raw){
+  document.getElementById('no-data').style.display='block';
+} else {
+  A=JSON.parse(raw);
+  buildPage();
+}
+
+/* ─── BUILD PAGE ─────────────────────────────────────────────────────────── */
+function buildPage(){
+  const page=document.getElementById('page');
+  const gender=A.gender||'male';
+  const weight=parseFloat(A.weight)||0;
+  const height=parseFloat(A.height)||0;
+  const age=parseFloat(A.age)||0;
+  const actMul=parseFloat(A.activity)||1.55;
+  const goalAdj=parseFloat(A.goalAdj)||0;
+
+  const heightM=height/100;
+  const bmi=weight/(heightM*heightM);
+  const bmr=gender==='male'
+    ?(10*weight)+(6.25*height)-(5*age)+5
+    :(10*weight)+(6.25*height)-(5*age)-161;
+  const tdee=bmr*actMul;
+  const target=Math.round(tdee+goalAdj);
+  currentTarget=target;
+
+  const bmiInfo=getBMIInfo(bmi);
+
+  page.innerHTML=`
+  <!-- back -->
+  <a href="assessment.html" class="back-btn">← Back to Assessment</a>
+
+  <!-- 1. Patient header -->
+  <div class="section s-blue">
+    <div class="section-eyebrow">O — Objective · Patient Profile</div>
+    <div class="patient-header">
+      <div class="avatar">${gender==='male'?'👨':'👩'}</div>
+      <div class="patient-info">
+        <div class="patient-name">${esc(A.name||'Patient')}</div>
+        <div class="patient-meta">
+          ${gender==='male'?'Male':'Female'} ·
+          ${age} yrs ·
+          ${weight} kg ·
+          ${height} cm
+          ${A.phone?` · ${esc(A.phone)}`:''}
+          ${A.dob?` · DOB: ${A.dob}`:''}
+        </div>
+        <div>
+          <div class="bmi-badge" style="color:${bmiInfo.color};background:${bmiInfo.bg};border-color:${bmiInfo.border}">
+            BMI ${bmi.toFixed(1)} — ${bmiInfo.label}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Equations note -->
+  <div class="section s-blue" style="padding:20px 28px;">
+    <div class="eq-note">
+      <strong>Fields used in equations:</strong><br>
+      <strong>BMI</strong> = Weight ÷ Height² &nbsp;→ uses <em>Weight (${weight} kg)</em> + <em>Height (${height} cm)</em><br>
+      <strong>BMR</strong> (Mifflin-St Jeor) = 10×weight + 6.25×height − 5×age ${gender==='male'?'+ 5':'− 161'} &nbsp;→ adds <em>Age (${age} yrs)</em> + <em>Gender (${gender})</em><br>
+      <strong>TDEE</strong> = BMR × Activity Multiplier (${actMul}) &nbsp;→ uses <em>Activity Level</em><br>
+      <strong>Daily Target</strong> = TDEE ${goalAdj>=0?'+':''}${goalAdj} kcal &nbsp;→ uses <em>Goal Adjustment</em>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-box bmi-box">
+        <div class="stat-label">BMI</div>
+        <div class="stat-value c-yellow">${bmi.toFixed(1)}</div>
+        <div class="stat-unit">${bmiInfo.label}</div>
+      </div>
+      <div class="stat-box bmr">
+        <div class="stat-label">BMR</div>
+        <div class="stat-value c-blue">${Math.round(bmr).toLocaleString()}</div>
+        <div class="stat-unit">kcal at rest</div>
+      </div>
+      <div class="stat-box tdee">
+        <div class="stat-label">TDEE</div>
+        <div class="stat-value c-green">${Math.round(tdee).toLocaleString()}</div>
+        <div class="stat-unit">kcal active</div>
+      </div>
+      <div class="stat-box trgt" style="grid-column:1/-1">
+        <div class="stat-label">Daily Calorie Target</div>
+        <div class="stat-value c-orange" style="font-size:2rem">${target.toLocaleString()}</div>
+        <div class="stat-unit">kcal / day &nbsp;·&nbsp; Goal: ${goalAdjLabel(goalAdj)}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. SOAP summary -->
+  <div class="section s-yellow">
+    <div class="section-eyebrow">SOAP Note Summary</div>
+    <div class="section-title">Clinical Overview</div>
+    <div class="soap-grid" id="soap-grid"></div>
+  </div>
+
+  <!-- 4. Diet + macros -->
+  <div class="section s-purple" id="diet-section">
+    <div class="section-eyebrow">P — Plan · Nutrition</div>
+    <div class="section-title">Diet Plan & Macros</div>
+
+    <label class="field-label">Select Diet Type</label>
+    <select class="diet-sel" id="diet-sel" onchange="onDietChange()">
+      ${Object.entries(DIETS).map(([k,d])=>`<option value="${k}">${d.emoji} ${d.label}</option>`).join('')}
+    </select>
+
+    <div class="diet-header-row">
+      <div class="diet-name-tag" id="diet-name-tag">—</div>
+      <div class="diet-range-hint" id="diet-range-hint">—</div>
+    </div>
+
+    <div class="macro-bars" id="macro-bars"></div>
+    <div id="sodium-wrap"></div>
+
+    <button class="adjust-toggle" id="adj-toggle" onclick="toggleAdjust()">
+      ⚙ Adjust Macros &nbsp;<span class="arrow">▾</span>
+    </button>
+    <div class="adjust-panel" id="adj-panel">
+      <div class="adjust-inner">
+        <div class="adjust-note" id="adj-note"></div>
+        ${['carb','prot','fat'].map(k=>`
+        <div class="slider-row">
+          <div class="slider-top">
+            <div class="slider-name">
+              <span class="macro-dot" style="background:var(--${k==='carb'?'carb':k==='prot'?'prot':'fat'}-color)"></span>
+              ${k==='carb'?'Carbohydrates':k==='prot'?'Protein':'Fat'}
+            </div>
+            <div class="slider-pct" id="sl-${k}-pct" style="color:var(--${k==='carb'?'carb':k==='prot'?'prot':'fat'}-color)">—</div>
+          </div>
+          <input type="range" id="sl-${k}-input" min="${k==='prot'?5:5}" max="${k==='prot'?60:80}"
+            style="accent-color:var(--${k==='carb'?'carb':k==='prot'?'prot':'fat'}-color)" oninput="onSlider('${k}')">
+          <div class="slider-sub"><span id="sl-${k}-g">—</span><span id="sl-${k}-kcal">—</span></div>
+        </div>`).join('')}
+        <div class="total-check" id="total-check">Total: 100%</div>
+        <button class="reset-btn" onclick="resetSliders()">↺ Reset to diet defaults</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Clinical details -->
+  <div class="section s-green">
+    <div class="section-eyebrow">O — Objective · Medical</div>
+    <div class="section-title">Clinical Details</div>
+    <div class="soap-grid" id="clinical-grid"></div>
+  </div>
+
+  <!-- 6. Lifestyle summary -->
+  <div class="section s-orange">
+    <div class="section-eyebrow">A — Assessment · Lifestyle</div>
+    <div class="section-title">Lifestyle & Behaviour</div>
+    <div class="soap-grid" id="lifestyle-grid"></div>
+  </div>
+  `;
+
+  buildSOAP();
+  buildClinical();
+  buildLifestyle();
+
+  // init diet
+  currentDiet=DIETS['mediterranean'];
+  onDietChange();
+}
+
+/* ─── SOAP ─────────────────────────────────────────────────────────────── */
+function buildSOAP(){
+  const rows=[];
+  // S
+  if(A.goals?.length) rows.push({tag:'S',content:`<span class="key">Goals:</span> ${A.goals.map(g=>g.replace(/_/g,' ')).join(', ')}`});
+  if(A.readiness)     rows.push({tag:'S',content:`<span class="key">Readiness to change:</span> ${A.readiness}/10`});
+  if(A.dietTried)     rows.push({tag:'S',content:`<span class="key">Previous diet:</span> ${A.dietTried==='yes'?(A.prevDiet+' for '+A.dietDuration):'None'}`});
+  if(A.dietNotes)     rows.push({tag:'S',content:`<span class="key">Diet notes:</span> ${esc(A.dietNotes)}`});
+  if(A.gutSymptoms?.length) rows.push({tag:'S',content:`<span class="key">GI symptoms:</span> ${A.gutSymptoms.join(', ')}`});
+  if(A.eatTriggers?.length) rows.push({tag:'S',content:`<span class="key">Emotional triggers:</span> ${A.eatTriggers.join(', ')}`});
+  if(A.cook)          rows.push({tag:'S',content:`<span class="key">Meal prep ability:</span> ${esc(A.cook)}`});
+
+  // O
+  if(A.diagnoses?.length) rows.push({tag:'O',content:`<span class="key">Diagnoses:</span> ${A.diagnoses.join(', ')}`});
+  if(A.allergies)     rows.push({tag:'O',content:`<span class="key">Allergies:</span> ${esc(A.allergies)}`});
+  if(A.labs)          rows.push({tag:'O',content:`<span class="key">Labs:</span> ${esc(A.labs)}`});
+
+  // A
+  if(A.stress)        rows.push({tag:'A',content:`<span class="key">Stress:</span> ${esc(A.stress)}`});
+  if(A.sleep)         rows.push({tag:'A',content:`<span class="key">Sleep:</span> ${esc(A.sleep)}, quality: ${esc(A.sleepQ||'—')}`});
+  if(A.support)       rows.push({tag:'A',content:`<span class="key">Support:</span> ${esc(A.support)}`});
+
+  // P
+  if(A.goalAdj)       rows.push({tag:'P',content:`<span class="key">Goal adjustment:</span> ${goalAdjLabel(parseFloat(A.goalAdj))}`});
+  if(A.activity)      rows.push({tag:'P',content:`<span class="key">Activity multiplier:</span> ${A.activity}×`});
+
+  document.getElementById('soap-grid').innerHTML=rows.map(r=>`
+    <div class="soap-row">
+      <div class="soap-tag soap-${r.tag}">${r.tag}</div>
+      <div class="soap-content">${r.content}</div>
+    </div>`).join('') || '<div style="color:var(--muted);font-size:13px">No data recorded.</div>';
+}
+
+function buildClinical(){
+  const rows=[];
+  if(A.meds)      rows.push({tag:'O',content:`<span class="key">Medications:</span> ${esc(A.meds).replace(/\n/g,'<br>')}`});
+  if(A.surgeries) rows.push({tag:'O',content:`<span class="key">Surgeries / illnesses:</span> ${esc(A.surgeries).replace(/\n/g,'<br>')}`});
+  if(A.bowel)     rows.push({tag:'S',content:`<span class="key">Bowel frequency:</span> ${esc(A.bowel)}`});
+  if(A.stool)     rows.push({tag:'S',content:`<span class="key">Stool consistency:</span> ${esc(A.stool)}`});
+  const measFields=[['Neck',A.neck],['Left arm',A.armL],['Right arm',A.armR],['Chest',A.chest],['Waist',A.waist],['Hips',A.hips],['Right thigh',A.thighR],['Left thigh',A.thighL]].filter(([,v])=>v);
+  if(measFields.length) rows.push({tag:'O',content:`<span class="key">Measurements (cm):</span><br>${measFields.map(([k,v])=>`<span class="chip">${k}: ${v}</span>`).join('')}`});
+
+  document.getElementById('clinical-grid').innerHTML=rows.map(r=>`
+    <div class="soap-row">
+      <div class="soap-tag soap-${r.tag}">${r.tag}</div>
+      <div class="soap-content">${r.content}</div>
+    </div>`).join('') || '<div style="color:var(--muted);font-size:13px">No data recorded.</div>';
+}
+
+function buildLifestyle(){
+  const rows=[];
+  if(A.job)       rows.push({tag:'A',content:`<span class="key">Occupation:</span> ${esc(A.job)}`});
+  if(A.exTypes?.length){
+    let ex=A.exTypes.filter(t=>t!=='__other__').join(', ');
+    if(A.exTypes.includes('__other__')&&A.exOther) ex+=(ex?', ':'')+A.exOther;
+    if(ex) rows.push({tag:'P',content:`<span class="key">Exercise:</span> ${ex} — ${A.exFreq||'?'} days/week · ${A.exDur||'?'} min · ${A.exInt||'?'} intensity`});
+  }
+  if(A.screen)    rows.push({tag:'A',content:`<span class="key">Screen eating:</span> ${esc(A.screen)}`});
+  if(A.eatout)    rows.push({tag:'A',content:`<span class="key">Eating out:</span> ${esc(A.eatout)}`});
+  if(A.alcohol&&A.alcohol!=='None') rows.push({tag:'A',content:`<span class="key">Alcohol:</span> ${esc(A.alcohol)}`});
+  if(A.budget)    rows.push({tag:'P',content:`<span class="key">Food budget:</span> ${esc(A.budget)}`});
+  if(A.barriers)  rows.push({tag:'P',content:`<span class="key">Barriers:</span> ${esc(A.barriers)}`});
+
+  const meals=[['Breakfast',A.breakfast],['Lunch',A.lunch],['Dinner',A.dinner],['Snacks',A.snacks],['Fluids',A.fluids]].filter(([,v])=>v);
+  meals.forEach(([k,val])=>rows.push({tag:'S',content:`<span class="key">${k}:</span> ${esc(val)}`}));
+
+  document.getElementById('lifestyle-grid').innerHTML=rows.map(r=>`
+    <div class="soap-row">
+      <div class="soap-tag soap-${r.tag}">${r.tag}</div>
+      <div class="soap-content">${r.content}</div>
+    </div>`).join('') || '<div style="color:var(--muted);font-size:13px">No data recorded.</div>';
+}
+
+/* ─── DIET MACROS ────────────────────────────────────────────────────────── */
+function onDietChange(){
+  currentDiet=DIETS[document.getElementById('diet-sel').value];
+  document.getElementById('diet-name-tag').textContent=currentDiet.label;
+  document.getElementById('diet-range-hint').textContent=
+    `C ${pctLbl(currentDiet.carb[0],currentDiet.carb[1])} · P ${pctLbl(currentDiet.prot[0],currentDiet.prot[1])} · F ${pctLbl(currentDiet.fat[0],currentDiet.fat[1])}`;
+  document.getElementById('adj-note').textContent=
+    `Defaults are the midpoint of ${currentDiet.label} ranges. Drag sliders to fine-tune. Keep total = 100%.`;
+  initSliders();
+  renderMacroBars();
+}
+
+function renderMacroBars(){
+  const cal=currentTarget;
+  const macros=[
+    {name:'Carbohydrates',color:'var(--carb-color)',pct:sPct.carb,kcalPerG:4,range:[currentDiet.carb[0],currentDiet.carb[1]]},
+    {name:'Protein',      color:'var(--prot-color)',pct:sPct.prot,kcalPerG:4,range:[currentDiet.prot[0],currentDiet.prot[1]]},
+    {name:'Fat',          color:'var(--fat-color)', pct:sPct.fat, kcalPerG:9,range:[currentDiet.fat[0], currentDiet.fat[1]]},
+  ];
+  document.getElementById('macro-bars').innerHTML=macros.map(m=>{
+    const kcal=Math.round(cal*m.pct/100);
+    const g=Math.round(kcal/m.kcalPerG);
+    return`<div class="macro-row-wrap">
+      <div class="macro-top">
+        <div class="macro-name">
+          <span class="macro-dot" style="background:${m.color}"></span>${m.name}
+          <span style="color:var(--muted);font-size:11px;font-weight:400">(${pctLbl(m.range[0],m.range[1])})</span>
+        </div>
+        <div class="macro-nums"><strong>${m.pct}%</strong> · ${g} g · ${kcal} kcal</div>
+      </div>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.min(100,m.pct)}%;background:${m.color}"></div></div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('sodium-wrap').innerHTML=currentDiet.sodium?`
+    <div class="sodium-row">
+      <div class="sodium-label">🧂 Sodium limit</div>
+      <div><span class="sodium-val">${currentDiet.sodium.toLocaleString()}</span> <span class="sodium-unit">mg / day</span></div>
+    </div>`:'';
+}
+
+function initSliders(){
+  sPct.carb=mid(currentDiet.carb[0],currentDiet.carb[1]);
+  sPct.prot=mid(currentDiet.prot[0],currentDiet.prot[1]);
+  sPct.fat =mid(currentDiet.fat[0], currentDiet.fat[1]);
+  ['carb','prot','fat'].forEach(k=>{ document.getElementById(`sl-${k}-input`).value=sPct[k]; });
+  updateSliderUI();
+}
+
+function onSlider(key){
+  sPct[key]=parseInt(document.getElementById(`sl-${key}-input`).value);
+  updateSliderUI(); renderMacroBars();
+}
+function resetSliders(){ initSliders(); renderMacroBars(); }
+
+function updateSliderUI(){
+  const cal=currentTarget;
+  [{key:'carb',kcalPerG:4,color:'var(--carb-color)'},{key:'prot',kcalPerG:4,color:'var(--prot-color)'},{key:'fat',kcalPerG:9,color:'var(--fat-color)'}].forEach(r=>{
+    const pct=sPct[r.key];
+    const kcal=Math.round(cal*pct/100);
+    const g=Math.round(kcal/r.kcalPerG);
+    document.getElementById(`sl-${r.key}-pct`).textContent=`${pct}%`;
+    document.getElementById(`sl-${r.key}-g`).textContent=`${g} g`;
+    document.getElementById(`sl-${r.key}-kcal`).textContent=`${kcal} kcal`;
+    const inp=document.getElementById(`sl-${r.key}-input`);
+    const mn=parseInt(inp.min),mx=parseInt(inp.max);
+    const fp=((pct-mn)/(mx-mn))*100;
+    inp.style.background=`linear-gradient(to right,${r.color} ${fp}%,var(--border) ${fp}%)`;
+  });
+  const total=sPct.carb+sPct.prot+sPct.fat;
+  const tc=document.getElementById('total-check');
+  tc.className=total===100?'total-check ok':'total-check warn';
+  tc.textContent=total===100?'✓ Total: 100% — perfectly balanced':`⚠ Total: ${total}% — adjust to reach 100%`;
+}
+
+function toggleAdjust(){
+  adjOpen=!adjOpen;
+  document.getElementById('adj-toggle').classList.toggle('open',adjOpen);
+  document.getElementById('adj-panel').classList.toggle('open',adjOpen);
+}
+
+/* ─── UTILS ──────────────────────────────────────────────────────────────── */
+function getBMIInfo(bmi){
+  if(bmi<18.5) return{label:'Underweight',   color:'#79c0ff',bg:'rgba(121,192,255,0.12)',border:'rgba(121,192,255,0.3)'};
+  if(bmi<25)   return{label:'Normal Weight', color:'#3fb950',bg:'rgba(63,185,80,0.12)',  border:'rgba(63,185,80,0.3)'};
+  if(bmi<30)   return{label:'Overweight',    color:'#e3b341',bg:'rgba(227,179,65,0.12)', border:'rgba(227,179,65,0.3)'};
+  if(bmi<35)   return{label:'Obese I [30–35)',color:'#f0883e',bg:'rgba(240,136,62,0.12)', border:'rgba(240,136,62,0.3)'};
+  if(bmi<40)   return{label:'Obese II [35–40)',color:'#f85149',bg:'rgba(248,81,73,0.12)', border:'rgba(248,81,73,0.3)'};
+  return        {label:'Obese III [40+]',    color:'#ff7b72',bg:'rgba(255,123,114,0.18)',border:'rgba(255,123,114,0.4)'};
+}
+function goalAdjLabel(v){
+  if(v===0)    return'Maintain weight';
+  if(v===-300) return'Mild weight loss (−300 kcal)';
+  if(v===-500) return'Weight loss (−500 kcal)';
+  if(v===300)  return'Mild weight gain (+300 kcal)';
+  if(v===500)  return'Weight gain (+500 kcal)';
+  return `${v>0?'+':''}${v} kcal`;
+}
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>

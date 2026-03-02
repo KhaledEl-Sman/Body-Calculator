@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RD Patient Assessment</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:#0d1117; --surface:#161b22; --card:#1c2333; --border:#30363d;
+  --accent:#58a6ff; --accent2:#3fb950; --accent3:#f78166; --accent4:#d2a8ff; --accent5:#e3b341;
+  --text:#e6edf3; --muted:#8b949e; --red:#f85149;
+}
+body {
+  background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif;
+  min-height:100vh; padding:24px 16px 60px;
+  background-image:radial-gradient(ellipse at 15% 50%,rgba(88,166,255,0.05) 0%,transparent 55%),
+    radial-gradient(ellipse at 85% 10%,rgba(63,185,80,0.04) 0%,transparent 50%);
+}
+
+/* PROGRESS */
+.progress-shell { max-width:680px; margin:0 auto 28px; display:flex; flex-direction:column; gap:10px; }
+.progress-top { display:flex; align-items:center; justify-content:space-between; font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:1px; }
+.progress-bar-track { height:4px; background:var(--border); border-radius:10px; overflow:hidden; }
+.progress-bar-fill { height:100%; border-radius:10px; background:linear-gradient(90deg,var(--accent),var(--accent2)); transition:width 0.5s cubic-bezier(0.4,0,0.2,1); }
+.step-dots { display:flex; gap:6px; justify-content:center; flex-wrap:wrap; }
+.step-dot { width:8px; height:8px; border-radius:50%; background:var(--border); transition:all 0.3s; cursor:pointer; }
+.step-dot.done { background:var(--accent2); }
+.step-dot.active { background:var(--accent); transform:scale(1.4); }
+
+/* CARD */
+.card {
+  background:var(--card); border:1px solid var(--border); border-radius:20px; padding:36px 32px;
+  max-width:680px; margin:0 auto; position:relative; overflow:hidden; animation:fadeUp 0.45s ease both;
+}
+@keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+.card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,var(--accent),var(--accent2)); }
+
+.step-header { margin-bottom:28px; }
+.step-eyebrow { font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--accent); margin-bottom:8px; display:flex; align-items:center; gap:8px; }
+.step-title { font-family:'Playfair Display',serif; font-size:clamp(1.4rem,3vw,1.9rem); line-height:1.2; background:linear-gradient(135deg,#e6edf3 0%,#8b949e 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+.step-subtitle { color:var(--muted); font-size:13px; margin-top:6px; font-weight:300; }
+
+/* GRIDS */
+.grid-1 { display:grid; grid-template-columns:1fr; gap:16px; }
+.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+.grid-4 { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:16px; }
+.field { display:flex; flex-direction:column; gap:7px; }
+.field.full { grid-column:1/-1; }
+
+/* LABELS — required star */
+label { font-size:11px; font-weight:700; letter-spacing:0.8px; text-transform:uppercase; color:var(--muted); display:flex; align-items:center; gap:4px; }
+label .req { color:var(--red); font-size:13px; line-height:1; }
+
+/* INPUTS */
+input[type=text],input[type=tel],input[type=email],input[type=date],input[type=number],select,textarea {
+  background:var(--surface); border:1px solid var(--border); border-radius:10px; color:var(--text);
+  font-family:'DM Sans',sans-serif; font-size:15px; padding:11px 14px; width:100%;
+  transition:border-color 0.2s,box-shadow 0.2s; -webkit-appearance:none; appearance:none; resize:vertical;
+}
+select { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238b949e' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 14px center; padding-right:36px; cursor:pointer; }
+textarea { min-height:80px; }
+input:focus,select:focus,textarea:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(88,166,255,0.1); }
+input::placeholder,textarea::placeholder { color:var(--muted); opacity:0.5; }
+input[type=date]::-webkit-calendar-picker-indicator { filter:invert(0.6); }
+input.invalid,select.invalid { border-color:var(--red) !important; box-shadow:0 0 0 3px rgba(248,81,73,0.12) !important; }
+
+/* GENDER */
+.gender-group { display:flex; gap:10px; }
+.gender-btn { flex:1; padding:10px; border-radius:10px; border:1px solid var(--border); background:var(--surface); color:var(--muted); font-family:'DM Sans',sans-serif; font-size:14px; font-weight:500; cursor:pointer; transition:all 0.2s; text-align:center; }
+.gender-btn.active { border-color:var(--accent); background:rgba(88,166,255,0.1); color:var(--accent); }
+.gender-btn.invalid { border-color:var(--red) !important; }
+
+/* RADIO / CHECK */
+.radio-group,.checkbox-group { display:flex; flex-wrap:wrap; gap:8px; margin-top:4px; }
+.radio-option,.check-option { display:flex; align-items:center; gap:6px; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:8px 12px; cursor:pointer; font-size:13px; transition:all 0.2s; user-select:none; }
+.radio-option:hover,.check-option:hover { border-color:var(--accent); color:var(--accent); }
+.radio-option input,.check-option input[type=checkbox],.check-option input[type=radio] { width:14px; height:14px; accent-color:var(--accent); padding:0; border:none; background:transparent; flex-shrink:0; }
+.check-option input[type=text] { width:120px; padding:2px 8px; font-size:13px; margin-left:4px; border-radius:6px; height:28px; }
+
+/* READINESS */
+.readiness-group { display:flex; gap:6px; flex-wrap:wrap; }
+.readiness-btn { width:40px; height:40px; border-radius:8px; border:1px solid var(--border); background:var(--surface); color:var(--muted); font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; cursor:pointer; transition:all 0.2s; }
+.readiness-btn.active { border-color:var(--accent); background:rgba(88,166,255,0.15); color:var(--accent); }
+
+/* MEAS BOX */
+.meas-box { background:rgba(88,166,255,0.04); border:1px solid rgba(88,166,255,0.15); border-radius:12px; padding:18px; }
+.sec-label { font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); display:flex; align-items:center; gap:8px; margin-bottom:14px; }
+.sec-label::after { content:''; flex:1; height:1px; background:var(--border); display:block; }
+
+/* DOB PICKER */
+.dob-picker { display:flex; gap:8px; align-items:center; }
+.dob-picker input[type=number] {
+  -moz-appearance:textfield; text-align:center; padding:11px 6px;
+}
+.dob-picker input[type=number]::-webkit-inner-spin-button,
+.dob-picker input[type=number]::-webkit-outer-spin-button { -webkit-appearance:none; }
+.dob-picker .dob-sep { color:var(--muted); font-size:18px; font-weight:300; flex-shrink:0; }
+.dob-picker input#f-dob-d { width:64px; }
+.dob-picker input#f-dob-m { width:64px; }
+.dob-picker input#f-dob-y { width:90px; }
+.dob-age-chip {
+  display:inline-flex; align-items:center; gap:5px;
+  background:rgba(88,166,255,0.08); border:1px solid rgba(88,166,255,0.2);
+  border-radius:8px; padding:5px 12px; font-size:12px; color:var(--accent);
+  font-weight:600; margin-top:6px; min-height:28px; transition:all 0.2s;
+}
+
+/* VALIDATION TOAST */
+.toast {
+  position:fixed; top:20px; left:50%; transform:translateX(-50%) translateY(-80px);
+  background:#f85149; color:#fff; padding:12px 24px; border-radius:12px;
+  font-size:14px; font-weight:600; z-index:999; transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  white-space:nowrap; box-shadow:0 8px 30px rgba(248,81,73,0.4);
+}
+.toast.show { transform:translateX(-50%) translateY(0); }
+
+/* NAV */
+.nav-row { display:flex; gap:12px; margin-top:32px; }
+.btn-prev { padding:13px 24px; border-radius:12px; border:1px solid var(--border); background:transparent; color:var(--muted); font-family:'DM Sans',sans-serif; font-size:15px; font-weight:500; cursor:pointer; transition:all 0.2s; }
+.btn-prev:hover { border-color:var(--accent); color:var(--text); background:var(--surface); }
+.btn-next { flex:1; padding:13px; border-radius:12px; border:none; background:linear-gradient(135deg,#58a6ff,#3fb950); color:#0d1117; font-family:'DM Sans',sans-serif; font-size:15px; font-weight:700; cursor:pointer; transition:opacity 0.2s,transform 0.15s; }
+.btn-next:hover { opacity:0.9; transform:translateY(-1px); }
+.btn-next:active { transform:translateY(0); }
+
+@media(max-width:600px) {
+  .card { padding:24px 18px; }
+  .grid-2,.grid-3,.grid-4 { grid-template-columns:1fr; }
+  .readiness-btn { width:34px; height:34px; font-size:12px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-shell" id="progress-shell">
+  <div class="progress-top">
+    <span id="progress-label">Step 1 of 9</span>
+    <span id="progress-pct">11%</span>
+  </div>
+  <div class="progress-bar-track"><div class="progress-bar-fill" id="progress-fill" style="width:11%"></div></div>
+  <div class="step-dots" id="step-dots"></div>
+</div>
+
+<div id="step-container"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const A = {};
+let gender = 'male';
+let readiness = null;
+let currentStep = 0;
+
+/* ── helpers ── */
+function v(id){ const el=document.getElementById(id); return el?el.value.trim():''; }
+function today(){ return new Date().toISOString().split('T')[0]; }
+function setGender(g){
+  gender=g; A.gender=g;
+  document.getElementById('gb-male')?.classList.toggle('active',g==='male');
+  document.getElementById('gb-female')?.classList.toggle('active',g==='female');
+  document.getElementById('gb-male')?.classList.remove('invalid');
+  document.getElementById('gb-female')?.classList.remove('invalid');
+}
+function setReadiness(n){
+  readiness=n; A.readiness=n;
+  document.querySelectorAll('.readiness-btn').forEach(b=>b.classList.toggle('active',parseInt(b.textContent)===n));
+}
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2800);
+}
+function markInvalid(id){ document.getElementById(id)?.classList.add('invalid'); }
+function clearInvalid(){ document.querySelectorAll('.invalid').forEach(el=>el.classList.remove('invalid')); }
+
+function calcAge(d,m,y){
+  if(!d||!m||!y||String(y).length<4) return '';
+  const today=new Date();
+  const birth=new Date(+y,+m-1,+d);
+  if(isNaN(birth)||birth>today) return '';
+  let age=today.getFullYear()-birth.getFullYear();
+  const mDiff=today.getMonth()-birth.getMonth();
+  if(mDiff<0||(mDiff===0&&today.getDate()<birth.getDate())) age--;
+  return age>=0?age:'';
+}
+
+function calcAgeChip(d,m,y){
+  const age=calcAge(d,m,y);
+  return age!=='' ? '🎂 Age: '+age+' years' : '';
+}
+
+function onDobChange(){
+  const d=document.getElementById('f-dob-d')?.value;
+  const m=document.getElementById('f-dob-m')?.value;
+  const y=document.getElementById('f-dob-y')?.value;
+  const chip=document.getElementById('dob-age-chip');
+  if(chip){
+    const label=calcAgeChip(d,m,y);
+    chip.textContent=label;
+    chip.style.display=label?'inline-flex':'none';
+  }
+  A.dobD=d; A.dobM=m; A.dobY=y;
+  A.age=calcAge(d,m,y);
+}
+
+/* ── STEPS ── */
+const STEPS = [
+
+  /* 0 — Contact */
+  {
+    id:'contact', eyebrow:'S — Subjective', emoji:'🧑‍⚕️', title:'Patient Contact',
+    subtitle:'Basic identification information',
+    required:['f-name'],  // dob validated via f-dob-d/m/y, gender always set
+    render(c){
+      c.innerHTML=`
+      <div class="grid-2">
+        <div class="field full"><label>Full Name <span class="req">*</span></label>
+          <input type="text" id="f-name" placeholder="e.g. Ahmed Hassan" value="${A.name||''}"></div>
+        <div class="field"><label>📞 Phone <span class="req">*</span></label>
+          <input type="tel" id="f-phone" placeholder="e.g. 01012345678" value="${A.phone||''}"></div>
+        <div class="field"><label>✉️ Email</label>
+          <input type="email" id="f-email" placeholder="taylor@example.com" value="${A.email||''}"></div>
+        <div class="field"><label>📅 Assessment Date</label>
+          <input type="date" id="f-date" value="${A.date||today()}"></div>
+        <div class="field full">
+          <label>Date of Birth <span class="req">*</span></label>
+          <div class="dob-picker">
+            <input type="number" id="f-dob-d" min="1" max="31" placeholder="DD"
+              value="${A.dobD||''}" oninput="onDobChange()">
+            <span class="dob-sep">/</span>
+            <input type="number" id="f-dob-m" min="1" max="12" placeholder="MM"
+              value="${A.dobM||''}" oninput="onDobChange()">
+            <span class="dob-sep">/</span>
+            <input type="number" id="f-dob-y" min="1900" max="2099" placeholder="YYYY"
+              value="${A.dobY||''}" oninput="onDobChange()">
+          </div>
+          <div class="dob-age-chip" id="dob-age-chip">${calcAgeChip(A.dobD,A.dobM,A.dobY)}</div>
+        </div>
+        <div class="field"><label>Gender <span class="req">*</span></label>
+          <div class="gender-group">
+            <button class="gender-btn ${gender==='male'?'active':''}" id="gb-male" onclick="setGender('male')">♂ Male</button>
+            <button class="gender-btn ${gender==='female'?'active':''}" id="gb-female" onclick="setGender('female')">♀ Female</button>
+          </div>
+        </div>
+      </div>`;
+    },
+    validate(){
+      let ok=true;
+      const errors=[];
+
+      // Name
+      if(!v('f-name')){ markInvalid('f-name'); errors.push('Full name is required'); ok=false; }
+
+      // Phone - Egyptian format: starts with 010/011/012/015 + 8 digits
+      const rawPhone=v('f-phone').replace(/[\s\-().+]/g,'');
+      const egPhone=/^(\+?20)?(010|011|012|015)\d{8}$/.test(rawPhone);
+      if(!rawPhone){ markInvalid('f-phone'); errors.push('Phone number is required'); ok=false; }
+      else if(!egPhone){ markInvalid('f-phone'); errors.push('Enter a valid Egyptian number (e.g. 01012345678)'); ok=false; }
+
+      // DOB - all three parts + valid calendar date
+      const dd=parseInt(document.getElementById('f-dob-d')?.value)||0;
+      const mm=parseInt(document.getElementById('f-dob-m')?.value)||0;
+      const yy=parseInt(document.getElementById('f-dob-y')?.value)||0;
+      if(!dd){ markInvalid('f-dob-d'); errors.push('Day is required'); ok=false; }
+      if(!mm){ markInvalid('f-dob-m'); errors.push('Month is required'); ok=false; }
+      if(!yy||String(yy).length!==4){ markInvalid('f-dob-y'); errors.push('Enter a valid 4-digit year'); ok=false; }
+      if(ok || (dd&&mm&&yy&&String(yy).length===4)){
+        if(dd&&mm&&yy&&String(yy).length===4){
+          const born=new Date(yy,mm-1,dd);
+          const valid= born.getFullYear()===yy && born.getMonth()===mm-1 && born.getDate()===dd;
+          if(!valid){ markInvalid('f-dob-d'); markInvalid('f-dob-m'); errors.push('Invalid date (e.g. Feb 30 does not exist)'); ok=false; }
+          else if(born>new Date()){ markInvalid('f-dob-y'); errors.push('Date of birth cannot be in the future'); ok=false; }
+          else if(yy<1900){ markInvalid('f-dob-y'); errors.push('Year must be 1900 or later'); ok=false; }
+        }
+      }
+
+      if(!ok) showToast(errors[0]);
+      return ok;
+    },
+    save(){
+      A.name=v('f-name'); A.phone=v('f-phone'); A.email=v('f-email');
+      A.date=v('f-date'); A.gender=gender;
+      A.dobD=document.getElementById('f-dob-d')?.value||'';
+      A.dobM=document.getElementById('f-dob-m')?.value||'';
+      A.dobY=document.getElementById('f-dob-y')?.value||'';
+      A.dob=A.dobY&&A.dobM&&A.dobD ? A.dobY+'-'+String(A.dobM).padStart(2,'0')+'-'+String(A.dobD).padStart(2,'0') : '';
+      A.age=calcAge(A.dobD,A.dobM,A.dobY);
+    }
+  },
+
+  /* 1 — Body */
+  {
+    id:'body', eyebrow:'O — Objective', emoji:'📐', title:'Body Measurements',
+    subtitle:'Anthropometric data and weight history',
+    required:['f-height','f-weight'],
+    render(c){
+      c.innerHTML=`
+      <div class="grid-2">
+        <div class="field"><label>Height (cm) <span class="req">*</span></label>
+          <input type="number" id="f-height" placeholder="170" value="${A.height||''}"></div>
+        <div class="field"><label>Current Weight (kg) <span class="req">*</span></label>
+          <input type="number" id="f-weight" placeholder="70" value="${A.weight||''}"></div>
+        <div class="field" style="pointer-events:none;opacity:0.6">
+          <label>Age (calculated from DOB)</label>
+          <input type="text" id="f-age-display" readonly
+            value="${A.age ? A.age+' years' : ''}"
+            placeholder="Calculated from DOB in Step 1"
+            style="cursor:default;border-style:dashed;"></div>
+        <div class="field"><label>Desired Weight (kg)</label>
+          <input type="number" id="f-desired-wt" placeholder="—" value="${A.desiredWt||''}"></div>
+        <div class="field"><label>Usual Adult Weight (kg)</label>
+          <input type="number" id="f-usual-wt" placeholder="—" value="${A.usualWt||''}"></div>
+        <div class="field"><label>Highest Adult Weight (kg)</label>
+          <input type="number" id="f-max-wt" placeholder="—" value="${A.maxWt||''}"></div>
+        <div class="field"><label>Lowest Adult Weight (kg)</label>
+          <input type="number" id="f-min-wt" placeholder="—" value="${A.minWt||''}"></div>
+      </div>
+      <div style="margin-top:20px;">
+        <div class="sec-label">📏 Circumference measurements (cm)</div>
+        <div class="meas-box">
+          <div class="grid-4">
+            <div class="field"><label>Neck</label><input type="text" id="f-neck" placeholder="—" value="${A.neck||''}"></div>
+            <div class="field"><label>Left Arm</label><input type="text" id="f-arm-l" placeholder="—" value="${A.armL||''}"></div>
+            <div class="field"><label>Right Arm</label><input type="text" id="f-arm-r" placeholder="—" value="${A.armR||''}"></div>
+            <div class="field"><label>Chest</label><input type="text" id="f-chest" placeholder="—" value="${A.chest||''}"></div>
+            <div class="field"><label>Waist</label><input type="text" id="f-waist" placeholder="—" value="${A.waist||''}"></div>
+            <div class="field"><label>Hips</label><input type="text" id="f-hips" placeholder="—" value="${A.hips||''}"></div>
+            <div class="field"><label>Right Thigh</label><input type="text" id="f-thigh-r" placeholder="—" value="${A.thighR||''}"></div>
+            <div class="field"><label>Left Thigh</label><input type="text" id="f-thigh-l" placeholder="—" value="${A.thighL||''}"></div>
+          </div>
+        </div>
+      </div>`;
+    },
+    validate(){
+      let ok=true;
+      ['f-height','f-weight'].forEach(id=>{ if(!v(id)){ markInvalid(id); ok=false; } });
+      if(!ok) showToast('Height and Weight are required (*)');
+      return ok;
+    },
+    save(){
+      A.height=v('f-height'); A.weight=v('f-weight');
+      // A.age already set from DOB in contact step
+      A.desiredWt=v('f-desired-wt'); A.usualWt=v('f-usual-wt');
+      A.maxWt=v('f-max-wt'); A.minWt=v('f-min-wt');
+      A.neck=v('f-neck'); A.armL=v('f-arm-l'); A.armR=v('f-arm-r');
+      A.chest=v('f-chest'); A.waist=v('f-waist'); A.hips=v('f-hips');
+      A.thighR=v('f-thigh-r'); A.thighL=v('f-thigh-l');
+    }
+  },
+
+  /* 2 — Diet history */
+  {
+    id:'diet-history', eyebrow:'S — Subjective', emoji:'📋', title:'Diet History',
+    subtitle:'Previous dietary experience and consistency',
+    render(c){
+      c.innerHTML=`
+      <div class="grid-1">
+        <div class="field">
+          <label>Have you tried to follow a diet before?</label>
+          <div class="radio-group">
+            <label class="radio-option"><input type="radio" name="diet_tried" value="yes" ${A.dietTried==='yes'?'checked':''}> Yes</label>
+            <label class="radio-option"><input type="radio" name="diet_tried" value="no"  ${A.dietTried==='no' ?'checked':''}> No</label>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="field"><label>If yes — which diet type?</label>
+            <select id="f-prev-diet">
+              ${['Keto / Low‑carb','Mediterranean','Intermittent fasting','Calorie counting / portion','Paleo / Whole30','Vegetarian / vegan','DASH / low‑sodium','Other'].map(o=>`<option ${A.prevDiet===o?'selected':''}>${o}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field"><label>How long consistent?</label>
+            <select id="f-diet-duration">
+              ${['< 1 week','1–4 weeks','1–3 months','3–6 months','6–12 months','> 1 year'].map(o=>`<option ${A.dietDuration===o?'selected':''}>${o}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div class="field"><label>What worked / what didn't</label>
+          <textarea id="f-diet-notes" placeholder="e.g. lost 5 kg but regained, felt tired on keto …">${A.dietNotes||''}</textarea>
+        </div>
+      </div>`;
+    },
+    validate(){ return true; },
+    save(){
+      const r=document.querySelector('input[name="diet_tried"]:checked');
+      A.dietTried=r?r.value:''; A.prevDiet=v('f-prev-diet');
+      A.dietDuration=v('f-diet-duration'); A.dietNotes=v('f-diet-notes');
+    }
+  },
+
+  /* 3 — Goals */
+  {
+    id:'goals', eyebrow:'S — Subjective', emoji:'🎯', title:'Goals & Readiness',
+    subtitle:'What the patient wants to achieve and activity level for calorie calculation',
+    render(c){
+      const goals=[['weight_loss','Weight Loss'],['weight_gain','Weight Gain'],['muscle_gain','Muscle Gain'],
+        ['maintain_weight','Maintain Weight'],['blood_sugar','Manage Blood Sugar'],['more_energy','More Energy'],
+        ['gut_health','Gut Health'],['heart_health','Heart Health'],['hormonal','Hormonal / PCOS / Thyroid'],['wellness','General Wellness']];
+      const savedGoals=A.goals||[];
+      c.innerHTML=`
+      <div class="grid-1">
+        <div class="field">
+          <label>Primary goals (check all that apply)</label>
+          <div class="checkbox-group">
+            ${goals.map(([val,lbl])=>`<label class="check-option"><input type="checkbox" name="goal" value="${val}" ${savedGoals.includes(val)?'checked':''}> ${lbl}</label>`).join('')}
+          </div>
+        </div>
+        <div class="field">
+          <label>Readiness to change &nbsp;<span style="font-weight:300;text-transform:none;letter-spacing:0">(1 = not ready → 10 = very ready)</span></label>
+          <div class="readiness-group">
+            ${[1,2,3,4,5,6,7,8,9,10].map(n=>`<button class="readiness-btn ${(A.readiness||readiness)===n?'active':''}" onclick="setReadiness(${n})">${n}</button>`).join('')}
+          </div>
+        </div>
+        <div class="field">
+          <label>Activity Level <span class="req">*</span>
+            <span style="font-size:10px;font-weight:400;color:var(--accent);text-transform:none;letter-spacing:0;margin-left:4px">→ used in TDEE</span>
+          </label>
+          <select id="f-activity">
+            ${[['1.2','Sedentary — little or no exercise'],['1.375','Lightly Active — 1–3 days/week'],['1.55','Moderately Active — 3–5 days/week'],['1.725','Very Active — 6–7 days/week'],['1.9','Extra Active — physical job + training']].map(([val,lbl])=>`<option value="${val}" ${A.activity===val?'selected':''}>${lbl}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field">
+          <label>Goal Adjustment <span class="req">*</span>
+            <span style="font-size:10px;font-weight:400;color:var(--accent);text-transform:none;letter-spacing:0;margin-left:4px">→ added to TDEE for daily target</span>
+          </label>
+          <select id="f-goaladj">
+            ${[['0','Maintain Weight — eat at TDEE'],['-300','Mild Weight Loss — TDEE − 300 kcal'],['-500','Weight Loss — TDEE − 500 kcal'],['300','Mild Weight Gain — TDEE + 300 kcal'],['500','Weight Gain — TDEE + 500 kcal']].map(([val,lbl])=>`<option value="${val}" ${A.goalAdj===val?'selected':''}>${lbl}</option>`).join('')}
+          </select>
+        </div>
+      </div>`;
+    },
+    validate(){ return true; },
+    save(){
+      A.goals=[...document.querySelectorAll('input[name="goal"]:checked')].map(el=>el.value);
+      A.readiness=readiness; A.activity=v('f-activity'); A.goalAdj=v('f-goaladj');
+    }
+  },
+
+  /* 4 — Medical */
+  {
+    id:'medical', eyebrow:'O — Objective', emoji:'🩺', title:'Medical & Clinical',
+    subtitle:'Diagnoses, medications, allergies, labs',
+    render(c){
+      const diags=['Diabetes / pre‑diabetes','Hypertension','High cholesterol','PCOS','Thyroid','GERD / reflux','IBS / gut issue','Favism (G6PD)','Depression / anxiety'];
+      const savedDiags=A.diagnoses||[];
+      c.innerHTML=`
+      <div class="grid-1">
+        <div class="field"><label>Current diagnoses (check all)</label>
+          <div class="checkbox-group">
+            ${diags.map(d=>`<label class="check-option"><input type="checkbox" name="diag" value="${d}" ${savedDiags.includes(d)?'checked':''}> ${d}</label>`).join('')}
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="field"><label>Past surgeries / illnesses</label>
+            <textarea id="f-surgeries" placeholder="e.g. cholecystectomy">${A.surgeries||''}</textarea></div>
+          <div class="field"><label>Medications & supplements</label>
+            <textarea id="f-meds" placeholder="metformin 500mg&#10;vitamin D3">${A.meds||''}</textarea></div>
+          <div class="field"><label>Allergies / intolerances</label>
+            <textarea id="f-allergies" placeholder="penicillin&#10;gluten sensitivity">${A.allergies||''}</textarea></div>
+          <div class="field"><label>Recent labs (if known)</label>
+            <textarea id="f-labs" placeholder="HbA1c 6.1%&#10;LDL 130">${A.labs||''}</textarea></div>
+        </div>
+      </div>`;
+    },
+    validate(){ return true; },
+    save(){
+      A.diagnoses=[...document.querySelectorAll('input[name="diag"]:checked')].map(el=>el.value);
+      A.surgeries=v('f-surgeries'); A.meds=v('f-meds'); A.allergies=v('f-allergies'); A.labs=v('f-labs');
+    }
+  },
+
+  /* 5 — Gut */
+  {
+    id:'gut', eyebrow:'S — Subjective', emoji:'🌿', title:'Gut Health',
+    subtitle:'Gastrointestinal symptoms and patterns',
+    render(c){
+      const symptoms=['Bloating / gas','Reflux / heartburn','Pain / cramps','None'];
+      const savedSymp=A.gutSymptoms||[];
+      c.innerHTML=`
+      <div class="grid-2">
+        <div class="field"><label>Bowel frequency</label>
+          <select id="f-bowel">
+            ${[
+              'More than 6x/day','5–6x/day','3–4x/day','1–2x/day',
+              'Every other day','2–3x/week','Less than 2x/week','Irregular'
+            ].map(o=>`<option ${A.bowel===o?'selected':''}>${o}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field"><label>Stool consistency</label>
+          <select id="f-stool">
+            ${['Type 3–4 (normal)','Type 1–2 (constipation)','Type 5–6 (loose / diarrhea)'].map(o=>`<option ${A.stool===o?'selected':''}>${o}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field full"><label>Symptoms</label>
+          <div class="checkbox-group">
+            ${symptoms.map(s=>`<label class="check-option"><input type="checkbox" name="gut-symp" value="${s}" ${savedSymp.includes(s)?'checked':''}> ${s}</label>`).join('')}
+          </div>
+        </div>
+      </div>`;
+    },
+    validate(){ return true; },
+    save(){
+      A.bowel=v('f-bowel'); A.stool=v('f-stool');
+      A.gutSymptoms=[...document.querySelectorAll('input[name="gut-symp"]:checked')].map(el=>el.value);
+    }
+  },
+
+  /* 6 — Eating pattern */
+  {
+    id:'eating', eyebrow:'S — Subjective', emoji:'🥗', title:'Daily Eating Pattern',
+    subtitle:'Typical meals, fluids, preferences, and restrictions',
+    render(c){
+      c.innerHTML=`
+      <div class="grid-2">
+        <div class="field"><label>Breakfast (time + food)</label>
+          <textarea id="f-breakfast" placeholder="8am – oatmeal, berries">${A.breakfast||''}</textarea></div>
+        <div class="field"><label>Lunch</label>
+          <textarea id="f-lunch" placeholder="12:30 – chicken salad">${A.lunch||''}</textarea></div>
+        <div class="field"><label>Dinner</label>
+          <textarea id="f-dinner" placeholder="7pm – salmon, rice, veg">${A.dinner||''}</textarea></div>
+        <div class="field"><label>Snacks (what & when)</label>
+          <textarea id="f-snacks" placeholder="3pm – yogurt&#10;9pm – popcorn">${A.snacks||''}</textarea></div>
+        <div class="field"><label>🚰 Fluids per day</label>
+          <textarea id="f-fluids" placeholder="water ~6 cups&#10;coffee 1 cup">${A.fluids||''}</textarea></div>
+        <div class="field"><label>Favourite healthy food</label>
+          <textarea id="f-fav-food" placeholder="avocado, berries">${A.favFood||''}</textarea></div>
+        <div class="field"><label>Cravings</label>
+          <textarea id="f-cravings" placeholder="dark chocolate, chips">${A.cravings||''}</textarea></div>
+        <div class="field"><label>Foods you refuse / dislike</label>
+          <textarea id="f-refuse" placeholder="mushrooms, organ meats">${A.refuse||''}</textarea></div>
+        <div class="field"><label>Eat out / takeout frequency</label>
+          <select id="f-eatout">
+            ${['None','Rarely (1–2x/month)','Weekly (1–2x/week)','Several times/week','Daily'].map(o=>`<option ${A.eatout===o?'selected':''}>${o}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field"><label>🍺 Alcohol (optional)</label>
+          <select id="f-alcohol">
+            ${['None','1–2/week','3–5/week','Daily'].map(o=>`<option ${A.alcohol===o?'selected':''}>${o}</option>`).join('')}
+          </select>
+        </div>
+      </div>`;
+    },
+    validate(){ return true; },
+    save(){
+      A.breakfast=v('f-breakfast'); A.lunch=v('f-lunch'); A.dinner=v('f-dinner');
+      A.snacks=v('f-snacks'); A.fluids=v('f-fluids'); A.favFood=v('f-fav-food');
+      A.cravings=v('f-cravings'); A.refuse=v('f-refuse');
+      A.eatout=v('f-eatout'); A.alcohol=v('f-alcohol');
+    }
+  },
+
+  /* 7 — Behaviours */
+  {
+    id:'behaviour', eyebrow:'S — Subjective', emoji:'🧠', title:'Behaviours & Context',
+    subtitle:'Eating habits, emotional triggers, cooking ability, support',
+    render(c){
+      const triggers=['Stress','Boredom','Sadness','Happiness / celebration','Not really'];
+      const savedTrigs=A.eatTriggers||[];
+      c.innerHTML=`
+      <div class="grid-1">
+        <div class="grid-2">
+          <div class="field"><label>Eating in front of screen?</label>
+            <select id="f-screen">${['Rarely','Sometimes','Often','Always'].map(o=>`<option ${A.screen===o?'selected':''}>${o}</option>`).join('')}</select></div>
+          <div class="field"><label>Eating standing / rushed?</label>
+            <select id="f-rushed">${['Rarely','Sometimes','Often'].map(o=>`<option ${A.rushed===o?'selected':''}>${o}</option>`).join('')}</select></div>
+          <div class="field"><label>Hunger before meals</label>
+            <select id="f-hunger">${['1–2 (famished)','3–4 (hungry)','5–6 (mild hunger)','7–8 (not hungry)','9–10 (stuffed)'].map(o=>`<option ${A.hunger===o?'selected':''}>${o}</option>`).join('')}</select></div>
+          <div class="field"><label>Support system</label>
+            <select id="f-support">${['Supportive partner / family','Neutral','Not supportive','Self‑motivated alone'].map(o=>`<option ${A.support===o?'selected':''}>${o}</option>`).join('')}</select></div>
+        </div>
+        <div class="field"><label>Emotional eating triggers</label>
+          <div class="checkbox-group">
+            ${triggers.map(t=>`<label class="check-option"><input type="checkbox" name="trigger" value="${t}" ${savedTrigs.includes(t)?'checked':''}> ${t}</label>`).join('')}
+          </div>
+        </div>
+        <div class="field"><label>👩‍🍳 Ability & motivation to prepare meals?</label>
+          <div class="radio-group">
+            ${['Yes, fully','Mostly yes','Sometimes / limited','Rarely or no time'].map(o=>`<label class="radio-option"><input type="radio" name="cook" value="${o}" ${A.cook===o?'checked':''}> ${o}</label>`).join('')}
+          </div>
+        </div>
+      </div>`;
+    },
+    validate(){ return true; },
+    save(){
+      A.screen=v('f-screen'); A.rushed=v('f-rushed'); A.hunger=v('f-hunger'); A.support=v('f-support');
+      A.eatTriggers=[...document.querySelectorAll('input[name="trigger"]:checked')].map(el=>el.value);
+      const cr=document.querySelector('input[name="cook"]:checked');
+      A.cook=cr?cr.value:'';
+    }
+  },
+
+  /* 8 — Lifestyle */
+  {
+    id:'lifestyle', eyebrow:'A / P — Assessment & Plan', emoji:'😴', title:'Lifestyle, Activity & Budget',
+    subtitle:'Sleep, exercise, job, and barriers',
+    render(c){
+      const exTypes=['Cardio / walking','Strength / weights','Yoga / Pilates','None'];
+      const savedEx=A.exTypes||[];
+      const savedExOther=A.exOther||'';
+      c.innerHTML=`
+      <div class="grid-2">
+        <div class="field"><label>Job / occupation</label>
+          <input type="text" id="f-job" placeholder="e.g. teacher, nurse" value="${A.job||''}"></div>
+        <div class="field"><label>Sleep (hours/night)</label>
+          <select id="f-sleep">${['< 5h','5–6h','7–8h','8h+'].map(o=>`<option ${A.sleep===o?'selected':''}>${o}</option>`).join('')}</select></div>
+        <div class="field"><label>Sleep quality</label>
+          <select id="f-sleep-q">${['Restless / poor','Fair','Good','Very restful'].map(o=>`<option ${A.sleepQ===o?'selected':''}>${o}</option>`).join('')}</select></div>
+        <div class="field"><label>Stress level</label>
+          <select id="f-stress">${['1–3 (low)','4–6 (moderate)','7–8 (high)','9–10 (very high)'].map(o=>`<option ${A.stress===o?'selected':''}>${o}</option>`).join('')}</select></div>
+
+        <div class="field full"><label>Exercise type (check all)</label>
+          <div class="checkbox-group">
+            ${exTypes.map(t=>`<label class="check-option"><input type="checkbox" name="ex-type" value="${t}" ${savedEx.includes(t)?'checked':''}> ${t}</label>`).join('')}
+            <label class="check-option" id="ex-other-wrap">
+              <input type="checkbox" name="ex-type" value="__other__" id="ex-other-chk" ${savedEx.includes('__other__')?'checked':''} onchange="toggleExOther()"> Other:
+              <input type="text" id="ex-other-text" placeholder="specify…" value="${savedExOther}" style="display:${savedEx.includes('__other__')?'inline-block':'none'}">
+            </label>
+          </div>
+        </div>
+
+        <div class="field"><label>Frequency (days/week)</label>
+          <input type="text" id="f-ex-freq" placeholder="e.g. 3" value="${A.exFreq||''}"></div>
+        <div class="field"><label>Duration (min/session)</label>
+          <input type="text" id="f-ex-dur" placeholder="30" value="${A.exDur||''}"></div>
+        <div class="field"><label>Intensity</label>
+          <select id="f-ex-int">${['Light','Moderate','Vigorous'].map(o=>`<option ${A.exInt===o?'selected':''}>${o}</option>`).join('')}</select></div>
+        <div class="field"><label>💰 Food budget</label>
+          <input type="text" id="f-budget" placeholder="e.g. $70/week" value="${A.budget||''}"></div>
+        <div class="field"><label>Other barriers</label>
+          <input type="text" id="f-barriers" placeholder="time, transport, budget…" value="${A.barriers||''}"></div>
+      </div>`;
+    },
+    validate(){ return true; },
+    save(){
+      A.job=v('f-job'); A.sleep=v('f-sleep'); A.sleepQ=v('f-sleep-q'); A.stress=v('f-stress');
+      A.exTypes=[...document.querySelectorAll('input[name="ex-type"]:checked')].map(el=>el.value);
+      A.exOther=document.getElementById('ex-other-chk')?.checked ? (document.getElementById('ex-other-text')?.value.trim()||'') : '';
+      A.exFreq=v('f-ex-freq'); A.exDur=v('f-ex-dur'); A.exInt=v('f-ex-int');
+      A.budget=v('f-budget'); A.barriers=v('f-barriers');
+    }
+  }
+];
+
+function toggleExOther(){
+  const chk=document.getElementById('ex-other-chk');
+  const txt=document.getElementById('ex-other-text');
+  if(txt) txt.style.display=chk?.checked?'inline-block':'none';
+}
+
+const TOTAL=STEPS.length;
+
+/* ── RENDER ── */
+function renderStep(idx){
+  const s=STEPS[idx];
+  const pct=Math.round(((idx+1)/TOTAL)*100);
+  document.getElementById('progress-label').textContent=`Step ${idx+1} of ${TOTAL}`;
+  document.getElementById('progress-pct').textContent=`${pct}%`;
+  document.getElementById('progress-fill').style.width=pct+'%';
+  document.getElementById('step-dots').innerHTML=STEPS.map((_,i)=>`<div class="step-dot ${i<idx?'done':i===idx?'active':''}" onclick="goToStep(${i})"></div>`).join('');
+  document.getElementById('step-container').innerHTML=`
+    <div class="card">
+      <div class="step-header">
+        <div class="step-eyebrow"><span>${s.emoji}</span>${s.eyebrow}</div>
+        <div class="step-title">${s.title}</div>
+        <div class="step-subtitle">${s.subtitle}</div>
+      </div>
+      <div id="step-fields"></div>
+      <div class="nav-row">
+        ${idx>0?`<button class="btn-prev" onclick="prevStep()">← Back</button>`:''}
+        <button class="btn-next" onclick="nextStep()">
+          ${idx===TOTAL-1?'✓ Complete & View Results →':'Continue →'}
+        </button>
+      </div>
+    </div>`;
+  s.render(document.getElementById('step-fields'));
+  if(s.id==='contact'){
+    document.getElementById('gb-male')?.classList.toggle('active',gender==='male');
+    document.getElementById('gb-female')?.classList.toggle('active',gender==='female');
+  }
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function goToStep(idx){
+  if(idx>=currentStep) return;
+  STEPS[currentStep].save();
+  currentStep=idx;
+  renderStep(currentStep);
+}
+
+function nextStep(){
+  clearInvalid();
+  if(!STEPS[currentStep].validate()) return;
+  STEPS[currentStep].save();
+  if(currentStep<TOTAL-1){ currentStep++; renderStep(currentStep); }
+  else { launchResults(); }
+}
+
+function prevStep(){
+  STEPS[currentStep].save();
+  if(currentStep>0){ currentStep--; renderStep(currentStep); }
+}
+
+function launchResults(){
+  // save all data to sessionStorage then open results page
+  sessionStorage.setItem('rdAssessment', JSON.stringify({...A, gender}));
+  window.location.href='results.html';
+}
+
+renderStep(0);
+</script>
+</body>
+</html>
