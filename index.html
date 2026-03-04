@@ -481,14 +481,14 @@ const STEPS = [
         <div class="field"><label>Bowel frequency</label>
           <select id="f-bowel">
             ${[
-              'More than 6x/day','5–6x/day','3–4x/day','1–2x/day',
+              '3–4x/day','More than 6x/day','5–6x/day','1–2x/day',
               'Every other day','2–3x/week','Less than 2x/week','Irregular'
             ].map(o=>`<option ${A.bowel===o?'selected':''}>${o}</option>`).join('')}
           </select>
         </div>
         <div class="field"><label>Stool consistency</label>
           <select id="f-stool">
-            ${['Type 3–4 (normal)','Type 1–2 (constipation)','Type 5–6 (loose / diarrhea)'].map(o=>`<option ${A.stool===o?'selected':''}>${o}</option>`).join('')}
+            ${['Type 1–2 (constipation)','Type 3–4 (normal)','Type 5–6 (loose / diarrhea)'].map(o=>`<option ${A.stool===o?'selected':''}>${o}</option>`).join('')}
           </select>
         </div>
         <div class="field full"><label>Symptoms</label>
